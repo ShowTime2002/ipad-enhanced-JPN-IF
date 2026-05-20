@@ -18,323 +18,371 @@
       --text: #111827;
       --muted: #475569;
       --primary: #2563eb;
-      --accent: #f59e0b;
-      --danger: #dc2626;
-      --button-size: 108px;
-      --display-font-size: 52px;
-      --card-radius: 24px;
-      --gap: 14px;
+      --card-radius: 16px;
+      /* 設定で変更 */
+      --row-cell-h: 44px;
+      --row-cell-fs: 1.1rem;
+      --kana-cell-fs: 1.3rem;
+      --action-h: 50px;
+      --action-fs: 0.88rem;
+      --confirm-h: 56px;
+      --display-fs: 30px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html,
-    body {
-      margin: 0;
-      min-height: 100vh;
+    html, body {
+      height: 100dvh;
+      overflow: hidden;
       width: 100%;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      line-height: 1.4;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
     }
 
-    body {
-      padding: 16px;
-    }
+    body { padding: 8px; }
 
+    /* ── メインコンテナ: 3行グリッド ── */
     .container {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 8px;
       max-width: 960px;
       margin: 0 auto;
-      display: grid;
-      gap: 18px;
     }
 
-    header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 2rem;
-      letter-spacing: -0.03em;
-    }
-
-    .description {
-      margin: 0;
-      color: var(--muted);
-      max-width: 60ch;
-    }
-
+    /* ── カード共通 ── */
     .card {
       background: var(--surface);
       border-radius: var(--card-radius);
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-      padding: 20px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+      padding: 10px 12px;
       display: grid;
-      gap: 18px;
+      gap: 8px;
     }
 
     .section-title {
-      margin: 0;
-      font-size: 1.05rem;
+      font-size: 0.72rem;
       font-weight: 700;
+      color: var(--muted);
+      line-height: 1;
     }
 
-    .display-card {
-      border-radius: 28px;
-      background: #f8fbff;
-      min-height: 156px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
+    /* ── Row 1: 入力エリア ── */
     .display-text {
-      font-size: var(--display-font-size);
-      line-height: 1.1;
-      text-align: center;
+      font-size: var(--display-fs);
+      font-weight: 700;
+      line-height: 1.2;
       white-space: pre-wrap;
       word-break: break-word;
-      width: 100%;
-      min-height: 4.5rem;
-      color: var(--text);
+      background: #f8fbff;
+      border-radius: 10px;
+      padding: 6px 10px;
+      min-height: 46px;
     }
 
-    .status {
-      padding: 16px;
-      border-radius: 22px;
-      background: #eef2ff;
+    .status-bar {
+      font-size: 0.78rem;
+      font-weight: 600;
       color: #1d4ed8;
-      min-height: 56px;
-      display: flex;
-      align-items: center;
+      background: #eef2ff;
+      border-radius: 8px;
+      padding: 4px 10px;
+      line-height: 1.4;
     }
 
-    .row-grid,
-    .kana-grid,
-    .pad-grid,
-    .control-group,
-    .label-grid {
+    .action-row {
       display: grid;
-      gap: 12px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .action-btn {
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: var(--action-fs);
+      min-height: var(--action-h);
+      color: #fff;
+      transition: opacity 0.15s;
+    }
+    .action-btn:active { opacity: 0.75; }
+    .action-btn.read  { background: var(--primary); }
+    .action-btn.del   { background: #f59e0b; }
+    .action-btn.clear { background: #dc2626; }
+    .action-btn.space { background: #64748b; }
+
+    /* ── Row 2: 行選択 + 段選択 横並び ── */
+    .selection-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
 
     .row-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
     }
 
-    .row-cell,
-    .kana-cell,
-    .pad-button,
-    .action-button,
-    .toggle-button {
-      border: none;
-      border-radius: 22px;
-      background: #f3f4f6;
-      color: var(--text);
-      cursor: pointer;
-      transition: box-shadow 0.2s ease, transform 0.15s ease, background-color 0.2s ease;
-      min-height: var(--button-size);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
+    .kana-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
     }
 
     .row-cell,
     .kana-cell {
-      min-height: 88px;
-      background: #ffffff;
-      font-size: 1.6rem;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+      border: none;
+      border-radius: 10px;
+      background: #f3f4f6;
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: var(--row-cell-fs);
+      min-height: var(--row-cell-h);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.07);
+      transition: box-shadow 0.15s;
     }
+
+    .kana-cell { font-size: var(--kana-cell-fs); }
 
     .row-cell.active,
     .kana-cell.active {
       background: rgba(37, 99, 235, 0.12);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.16);
-      border: 3px solid var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+      border: 2px solid var(--primary);
     }
 
+    .row-cell.empty,
     .kana-cell.empty {
       background: transparent;
       box-shadow: none;
       cursor: default;
     }
 
+    /* ── Row 3: 方向キー（残り全高） ── */
+    .pad-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
     .pad-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 8px;
+      min-height: 0;
     }
 
     .pad-button {
-      background: #e0efff;
+      border: none;
+      border-radius: 14px;
+      background: #dbeafe;
+      color: var(--text);
+      cursor: pointer;
       font-size: 1.9rem;
-      min-height: 90px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.1s;
     }
-
-    .pad-button:hover:not(.center) {
-      background: #d0e8ff;
+    .pad-button:active:not(.center) {
+      background: #bfdbfe;
+      transform: scale(0.95);
     }
-
     .pad-button.center {
       background: transparent;
       box-shadow: none;
       cursor: default;
     }
 
-    .action-button,
-    .toggle-button {
+    .pad-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .confirm-btn {
+      border: none;
+      border-radius: 12px;
       background: var(--primary);
-      color: #ffffff;
-      font-size: 1rem;
-      min-height: 82px;
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      min-height: var(--confirm-h);
+      cursor: pointer;
+      transition: opacity 0.15s;
     }
+    .confirm-btn:active { opacity: 0.75; }
 
-    .action-button.secondary {
+    .settings-btn {
+      border: none;
+      border-radius: 12px;
       background: #f59e0b;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      min-height: var(--confirm-h);
+      min-width: 60px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .settings-btn:active { opacity: 0.75; }
+
+    /* ── 設定オーバーレイ ── */
+    .settings-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .settings-overlay.open { display: flex; }
+
+    .settings-panel {
+      background: var(--surface);
+      border-radius: var(--card-radius);
+      padding: 20px;
+      width: 100%;
+      max-width: 460px;
+      display: grid;
+      gap: 16px;
     }
 
-    .action-button.danger {
-      background: #dc2626;
-    }
-
-    .action-button.wide {
-      grid-column: span 2;
-    }
-
-    .control-group {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .settings-panel h2 {
+      font-size: 1rem;
+      font-weight: 700;
     }
 
     .label-grid {
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 12px;
     }
 
     label {
       display: grid;
-      gap: 8px;
+      gap: 6px;
       font-weight: 700;
-      color: var(--text);
+      font-size: 0.9rem;
     }
 
     select {
       width: 100%;
-      min-height: 56px;
-      padding: 12px 14px;
-      border-radius: 16px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border-radius: 10px;
       border: 1px solid #d1d5db;
-      background: #ffffff;
-      font-size: 1rem;
+      background: #fff;
+      font-size: 0.95rem;
       color: var(--text);
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    @media (max-width: 760px) {
-      .container {
-        padding: 0;
-      }
-
-      .control-group {
-        grid-template-columns: 1fr;
-      }
-
-      .action-button.wide {
-        grid-column: auto;
-      }
+    .close-btn {
+      border: none;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      min-height: 50px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <div>
-        <h1>日本語入力支援アプリ</h1>
-        <p class="description">大きな方向キーで行選択・文字選択し、ひらがな文章を入力します。iPadのような大きめUIを想定しています。</p>
-      </div>
-      <div id="statusText" class="status">初期状態: 「な」で行選択です。</div>
-    </header>
 
-    <section class="card">
-      <p class="section-title">入力済み文字</p>
-      <div class="display-card">
-        <div id="inputTextDisplay" class="display-text"></div>
+    <!-- Row 1: 入力エリア -->
+    <div class="card">
+      <div id="inputTextDisplay" class="display-text"></div>
+      <div id="statusText" class="status-bar">行選択: な行</div>
+      <div class="action-row">
+        <button id="readButton"   class="action-btn read" >読み上げ</button>
+        <button id="deleteButton" class="action-btn del"  >削除</button>
+        <button id="clearButton"  class="action-btn clear">クリア</button>
+        <button id="spaceButton"  class="action-btn space">空白</button>
       </div>
-      <div class="control-group">
-        <button id="readButton" class="action-button">読み上げ</button>
-        <button id="deleteButton" class="action-button secondary">削除</button>
-        <button id="clearButton" class="action-button danger">クリア</button>
-        <button id="spaceButton" class="action-button secondary">空白</button>
-      </div>
-    </section>
+    </div>
 
-    <section class="card">
-      <p class="section-title">行選択</p>
-      <div class="row-grid">
-        <button class="row-cell" data-row="あ">あ</button>
-        <button class="row-cell" data-row="か">か</button>
-        <button class="row-cell" data-row="さ">さ</button>
-        <button class="row-cell" data-row="た">た</button>
-        <button class="row-cell" data-row="な">な</button>
-        <button class="row-cell" data-row="は">は</button>
-        <button class="row-cell" data-row="ま">ま</button>
-        <button class="row-cell" data-row="や">や</button>
-        <button class="row-cell" data-row="ら">ら</button>
-        <div class="row-cell empty"></div>
-        <button class="row-cell" data-row="わ">わ</button>
-        <div class="row-cell empty"></div>
+    <!-- Row 2: 行選択 + 段選択 横並び -->
+    <div class="selection-row">
+      <div class="card">
+        <p class="section-title">行選択</p>
+        <div class="row-grid">
+          <button class="row-cell" data-row="あ">あ</button>
+          <button class="row-cell" data-row="か">か</button>
+          <button class="row-cell" data-row="さ">さ</button>
+          <button class="row-cell" data-row="た">た</button>
+          <button class="row-cell" data-row="な">な</button>
+          <button class="row-cell" data-row="は">は</button>
+          <button class="row-cell" data-row="ま">ま</button>
+          <button class="row-cell" data-row="や">や</button>
+          <button class="row-cell" data-row="ら">ら</button>
+          <div   class="row-cell empty"></div>
+          <button class="row-cell" data-row="わ">わ</button>
+          <div   class="row-cell empty"></div>
+        </div>
       </div>
-    </section>
 
-    <section class="card">
-      <p class="section-title">段選択</p>
-      <div class="kana-grid">
-        <div class="kana-cell empty"></div>
-        <button class="kana-cell" data-kana="up" id="kanaUp"></button>
-        <div class="kana-cell empty"></div>
-        <button class="kana-cell" data-kana="left" id="kanaLeft"></button>
-        <button class="kana-cell" data-kana="center" id="kanaCenter"></button>
-        <button class="kana-cell" data-kana="right" id="kanaRight"></button>
-        <div class="kana-cell empty"></div>
-        <button class="kana-cell" data-kana="down" id="kanaDown"></button>
-        <div class="kana-cell empty"></div>
+      <div class="card">
+        <p class="section-title">段選択</p>
+        <div class="kana-grid">
+          <div    class="kana-cell empty"></div>
+          <button class="kana-cell" data-kana="up"     id="kanaUp"></button>
+          <div    class="kana-cell empty"></div>
+          <button class="kana-cell" data-kana="left"   id="kanaLeft"></button>
+          <button class="kana-cell" data-kana="center" id="kanaCenter"></button>
+          <button class="kana-cell" data-kana="right"  id="kanaRight"></button>
+          <div    class="kana-cell empty"></div>
+          <button class="kana-cell" data-kana="down"   id="kanaDown"></button>
+          <div    class="kana-cell empty"></div>
+        </div>
       </div>
-    </section>
+    </div>
 
-    <section class="card">
+    <!-- Row 3: 方向キー（残り全高を使用） -->
+    <div class="card pad-card">
       <p class="section-title">方向キー</p>
       <div class="pad-grid">
         <button class="pad-button" data-dir="NW">↖</button>
-        <button class="pad-button" data-dir="N">↑</button>
+        <button class="pad-button" data-dir="N" >↑</button>
         <button class="pad-button" data-dir="NE">↗</button>
-        <button class="pad-button" data-dir="W">←</button>
-        <div class="pad-button center"></div>
-        <button class="pad-button" data-dir="E">→</button>
+        <button class="pad-button" data-dir="W" >←</button>
+        <div    class="pad-button center"></div>
+        <button class="pad-button" data-dir="E" >→</button>
         <button class="pad-button" data-dir="SW">↙</button>
-        <button class="pad-button" data-dir="S">↓</button>
+        <button class="pad-button" data-dir="S" >↓</button>
         <button class="pad-button" data-dir="SE">↘</button>
       </div>
-      <div class="control-group">
-        <button id="confirmButton" class="action-button wide">確定</button>
-        <button id="settingsToggleButton" class="action-button secondary">設定</button>
+      <div class="pad-controls">
+        <button id="confirmButton"       class="confirm-btn">確定</button>
+        <button id="settingsToggleButton" class="settings-btn">設定</button>
       </div>
-    </section>
+    </div>
 
-    <section class="card hidden" id="settingsPanel">
-      <p class="section-title">設定</p>
+  </div>
+
+  <!-- 設定オーバーレイ -->
+  <div class="settings-overlay" id="settingsOverlay">
+    <div class="settings-panel">
+      <h2>設定</h2>
       <div class="label-grid">
         <label>
           ボタンサイズ
@@ -362,14 +410,12 @@
           </select>
         </label>
       </div>
-      <div class="control-group">
-        <button id="closeSettingsButton" class="action-button wide">閉じる</button>
-      </div>
-    </section>
+      <button id="closeSettingsButton" class="close-btn">閉じる</button>
+    </div>
   </div>
 
   <script>
-    const STORAGE_INPUT = 'jp-access-input-text';
+    const STORAGE_INPUT    = 'jp-access-input-text';
     const STORAGE_SETTINGS = 'jp-access-settings';
 
     const ROW_NAV = {
@@ -400,10 +446,10 @@
 
     const KANA_NAV = {
       center: {N:'up',S:'down',W:'left',E:'right',NW:'up',NE:'up',SW:'down',SE:'down'},
-      up: {N:'up',S:'center',W:'up',E:'up',NW:'up',NE:'up',SW:'center',SE:'center'},
-      down: {N:'center',S:'down',W:'down',E:'down',NW:'center',NE:'center',SW:'down',SE:'down'},
-      left: {N:'left',S:'left',W:'left',E:'center',NW:'left',NE:'center',SW:'left',SE:'center'},
-      right: {N:'right',S:'right',W:'center',E:'right',NW:'center',NE:'right',SW:'center',SE:'right'}
+      up:     {N:'up',S:'center',W:'up',E:'up',NW:'up',NE:'up',SW:'center',SE:'center'},
+      down:   {N:'center',S:'down',W:'down',E:'down',NW:'center',NE:'center',SW:'down',SE:'down'},
+      left:   {N:'left',S:'left',W:'left',E:'center',NW:'left',NE:'center',SW:'left',SE:'center'},
+      right:  {N:'right',S:'right',W:'center',E:'right',NW:'center',NE:'right',SW:'center',SE:'right'}
     };
 
     const state = {
@@ -411,59 +457,52 @@
       selectedRow: 'な',
       selectedKanaPos: 'center',
       inputText: '',
-      settings: {
-        buttonSize: 'large',
-        textSize: 'large',
-        highlightColor: '#2563eb'
-      }
+      settings: { buttonSize: 'standard', textSize: 'standard', highlightColor: '#2563eb' }
     };
 
-    const inputTextDisplay = document.getElementById('inputTextDisplay');
-    const statusText = document.getElementById('statusText');
-    const rowCells = Array.from(document.querySelectorAll('.row-cell[data-row]'));
-    const kanaCells = {
-      up: document.getElementById('kanaUp'),
-      left: document.getElementById('kanaLeft'),
+    const inputTextDisplay     = document.getElementById('inputTextDisplay');
+    const statusText           = document.getElementById('statusText');
+    const rowCells             = Array.from(document.querySelectorAll('.row-cell[data-row]'));
+    const kanaCells            = {
+      up:     document.getElementById('kanaUp'),
+      left:   document.getElementById('kanaLeft'),
       center: document.getElementById('kanaCenter'),
-      right: document.getElementById('kanaRight'),
-      down: document.getElementById('kanaDown')
+      right:  document.getElementById('kanaRight'),
+      down:   document.getElementById('kanaDown')
     };
-    const directionButtons = Array.from(document.querySelectorAll('.pad-button[data-dir]'));
-    const confirmButton = document.getElementById('confirmButton');
-    const readButton = document.getElementById('readButton');
-    const deleteButton = document.getElementById('deleteButton');
-    const clearButton = document.getElementById('clearButton');
-    const spaceButton = document.getElementById('spaceButton');
-    const settingsToggleButton = document.getElementById('settingsToggleButton');
-    const settingsPanel = document.getElementById('settingsPanel');
-    const closeSettingsButton = document.getElementById('closeSettingsButton');
-    const buttonSizeSelect = document.getElementById('buttonSizeSelect');
-    const textSizeSelect = document.getElementById('textSizeSelect');
-    const highlightColorSelect = document.getElementById('highlightColorSelect');
+    const directionButtons       = Array.from(document.querySelectorAll('.pad-button[data-dir]'));
+    const confirmButton          = document.getElementById('confirmButton');
+    const readButton             = document.getElementById('readButton');
+    const deleteButton           = document.getElementById('deleteButton');
+    const clearButton            = document.getElementById('clearButton');
+    const spaceButton            = document.getElementById('spaceButton');
+    const settingsToggleButton   = document.getElementById('settingsToggleButton');
+    const settingsOverlay        = document.getElementById('settingsOverlay');
+    const closeSettingsButton    = document.getElementById('closeSettingsButton');
+    const buttonSizeSelect       = document.getElementById('buttonSizeSelect');
+    const textSizeSelect         = document.getElementById('textSizeSelect');
+    const highlightColorSelect   = document.getElementById('highlightColorSelect');
 
     function saveData() {
-      localStorage.setItem(STORAGE_INPUT, state.inputText);
+      localStorage.setItem(STORAGE_INPUT,    state.inputText);
       localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(state.settings));
     }
 
     function restoreData() {
-      const storedText = localStorage.getItem(STORAGE_INPUT);
+      const storedText     = localStorage.getItem(STORAGE_INPUT);
       const storedSettings = localStorage.getItem(STORAGE_SETTINGS);
       if (storedText !== null) state.inputText = storedText;
       if (storedSettings) {
-        try {
-          Object.assign(state.settings, JSON.parse(storedSettings));
-        } catch (error) {
-          console.warn('設定の復元に失敗しました', error);
-        }
+        try { Object.assign(state.settings, JSON.parse(storedSettings)); }
+        catch (e) { console.warn('設定の復元に失敗', e); }
       }
     }
 
     function updateUI() {
       inputTextDisplay.textContent = state.inputText || 'ここに入力内容が表示されます。';
+
       rowCells.forEach((cell) => {
-        const row = cell.dataset.row;
-        cell.classList.toggle('active', row === state.selectedRow);
+        cell.classList.toggle('active', cell.dataset.row === state.selectedRow);
       });
 
       const kana = KANA_MAP[state.selectedRow];
@@ -473,26 +512,29 @@
       });
 
       statusText.textContent = state.mode === 'rowSelection'
-        ? `行選択中: ${state.selectedRow}。確定で段選択へ。`
-        : `段選択中: ${KANA_MAP[state.selectedRow][state.selectedKanaPos]}。確定で入力。`;
+        ? `行選択: 「${state.selectedRow}」行`
+        : `段選択: 「${KANA_MAP[state.selectedRow][state.selectedKanaPos]}」`;
 
-      buttonSizeSelect.value = state.settings.buttonSize;
-      textSizeSelect.value = state.settings.textSize;
+      buttonSizeSelect.value     = state.settings.buttonSize;
+      textSizeSelect.value       = state.settings.textSize;
       highlightColorSelect.value = state.settings.highlightColor;
       applyStyles();
     }
 
     function applyStyles() {
-      document.documentElement.style.setProperty('--primary', state.settings.highlightColor);
-      document.documentElement.style.setProperty('--accent', state.settings.highlightColor);
-      document.documentElement.style.setProperty('--button-size', state.settings.buttonSize === 'standard' ? '92px' : state.settings.buttonSize === 'large' ? '108px' : '126px');
-      document.documentElement.style.setProperty('--display-font-size', state.settings.textSize === 'standard' ? '46px' : state.settings.textSize === 'large' ? '54px' : '62px');
-      rowCells.forEach((cell) => cell.style.fontSize = state.settings.textSize === 'xlarge' ? '2rem' : state.settings.textSize === 'large' ? '1.85rem' : '1.6rem');
-      Object.values(kanaCells).forEach((cell) => cell.style.fontSize = state.settings.textSize === 'xlarge' ? '2.4rem' : state.settings.textSize === 'large' ? '2.2rem' : '2rem');
-      directionButtons.forEach((button) => button.style.fontSize = state.settings.textSize === 'xlarge' ? '2.4rem' : state.settings.textSize === 'large' ? '2.1rem' : '1.9rem');
-      [confirmButton, readButton, deleteButton, clearButton, spaceButton, settingsToggleButton, closeSettingsButton].forEach((button) => {
-        button.style.fontSize = state.settings.textSize === 'xlarge' ? '1.16rem' : state.settings.textSize === 'large' ? '1.12rem' : '1rem';
-      });
+      const root = document.documentElement;
+      root.style.setProperty('--primary', state.settings.highlightColor);
+
+      const bs = state.settings.buttonSize;
+      root.style.setProperty('--row-cell-h', bs === 'xlarge' ? '58px' : bs === 'large' ? '52px' : '44px');
+      root.style.setProperty('--action-h',   bs === 'xlarge' ? '58px' : bs === 'large' ? '54px' : '50px');
+      root.style.setProperty('--confirm-h',  bs === 'xlarge' ? '68px' : bs === 'large' ? '62px' : '56px');
+
+      const ts = state.settings.textSize;
+      root.style.setProperty('--display-fs',  ts === 'xlarge' ? '38px'  : ts === 'large' ? '32px'  : '26px');
+      root.style.setProperty('--row-cell-fs', ts === 'xlarge' ? '1.3rem': ts === 'large' ? '1.15rem': '1rem');
+      root.style.setProperty('--kana-cell-fs',ts === 'xlarge' ? '1.55rem':ts === 'large' ? '1.4rem' : '1.25rem');
+      root.style.setProperty('--action-fs',   ts === 'xlarge' ? '1rem'  : ts === 'large' ? '0.92rem': '0.82rem');
     }
 
     function moveRow(dir) {
@@ -541,10 +583,7 @@
     function readAloud() {
       const text = state.inputText.trim();
       if (!text) return;
-      if (!window.speechSynthesis) {
-        alert('このブラウザは読み上げをサポートしていません。');
-        return;
-      }
+      if (!window.speechSynthesis) { alert('このブラウザは読み上げをサポートしていません。'); return; }
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ja-JP';
@@ -552,33 +591,19 @@
       window.speechSynthesis.speak(utterance);
     }
 
-    function deleteChar() {
-      state.inputText = state.inputText.slice(0, -1);
-      saveData();
-      updateUI();
-    }
-
-    function clearText() {
-      state.inputText = '';
-      saveData();
-      updateUI();
-    }
-
-    function insertSpace() {
-      state.inputText += ' ';
-      saveData();
-      updateUI();
-    }
+    function deleteChar()  { state.inputText = state.inputText.slice(0, -1); saveData(); updateUI(); }
+    function clearText()   { state.inputText = ''; saveData(); updateUI(); }
+    function insertSpace() { state.inputText += ' '; saveData(); updateUI(); }
 
     function toggleSettings() {
-      settingsPanel.classList.toggle('hidden');
+      settingsOverlay.classList.toggle('open');
     }
 
     rowCells.forEach((cell) => cell.addEventListener('click', () => setRowSelection(cell.dataset.row)));
     Object.entries(kanaCells).forEach(([pos, cell]) => {
       cell.addEventListener('click', () => setKanaSelection(pos));
     });
-    directionButtons.forEach((button) => button.addEventListener('click', () => handleDirection(button.dataset.dir)));
+    directionButtons.forEach((btn) => btn.addEventListener('click', () => handleDirection(btn.dataset.dir)));
     confirmButton.addEventListener('click', confirmSelection);
     readButton.addEventListener('click', readAloud);
     deleteButton.addEventListener('click', deleteChar);
@@ -586,29 +611,23 @@
     spaceButton.addEventListener('click', insertSpace);
     settingsToggleButton.addEventListener('click', toggleSettings);
     closeSettingsButton.addEventListener('click', toggleSettings);
-    buttonSizeSelect.addEventListener('change', (event) => {
-      state.settings.buttonSize = event.target.value;
-      saveData();
-      applyStyles();
+    settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) toggleSettings(); });
+
+    buttonSizeSelect.addEventListener('change', (e) => {
+      state.settings.buttonSize = e.target.value; saveData(); applyStyles();
     });
-    textSizeSelect.addEventListener('change', (event) => {
-      state.settings.textSize = event.target.value;
-      saveData();
-      applyStyles();
+    textSizeSelect.addEventListener('change', (e) => {
+      state.settings.textSize = e.target.value; saveData(); applyStyles();
     });
-    highlightColorSelect.addEventListener('change', (event) => {
-      state.settings.highlightColor = event.target.value;
-      saveData();
-      updateUI();
+    highlightColorSelect.addEventListener('change', (e) => {
+      state.settings.highlightColor = e.target.value; saveData(); updateUI();
     });
 
     restoreData();
     updateUI();
 
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js');
-      });
+      window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
     }
   </script>
 </body>
