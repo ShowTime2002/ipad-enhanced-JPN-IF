@@ -1,0 +1,19 @@
+{
+  "name": "日本語入力支援アプリ",
+  "short_name": "日本語入力",
+  "description": "構音障害・指先運動障害のある方向けの日本語入力支援アプリ",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#2563eb",
+  "lang": "ja",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

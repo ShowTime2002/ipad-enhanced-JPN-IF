@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>日本語入力支援アプリ</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="日本語入力" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f4f6;
+      --surface: #ffffff;
+      --text: #111827;
+      --muted: #475569;
+      --primary: #2563eb;
+      --accent: #f59e0b;
+      --danger: #dc2626;
+      --button-size: 108px;
+      --display-font-size: 52px;
+      --card-radius: 24px;
+      --gap: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100vh;
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.4;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .description {
+      margin: 0;
+      color: var(--muted);
+      max-width: 60ch;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--card-radius);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+      padding: 20px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .display-card {
+      border-radius: 28px;
+      background: #f8fbff;
+      min-height: 156px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .display-text {
+      font-size: var(--display-font-size);
+      line-height: 1.1;
+      text-align: center;
+      white-space: pre-wrap;
+      word-break: break-word;
+      width: 100%;
+      min-height: 4.5rem;
+      color: var(--text);
+    }
+
+    .status {
+      padding: 16px;
+      border-radius: 22px;
+      background: #eef2ff;
+      color: #1d4ed8;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+    }
+
+    .row-grid,
+    .kana-grid,
+    .pad-grid,
+    .control-group,
+    .label-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .row-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .row-cell,
+    .kana-cell,
+    .pad-button,
+    .action-button,
+    .toggle-button {
+      border: none;
+      border-radius: 22px;
+      background: #f3f4f6;
+      color: var(--text);
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, transform 0.15s ease, background-color 0.2s ease;
+      min-height: var(--button-size);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .row-cell,
+    .kana-cell {
+      min-height: 88px;
+      background: #ffffff;
+      font-size: 1.6rem;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .row-cell.active,
+    .kana-cell.active {
+      background: rgba(37, 99, 235, 0.12);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.16);
+      border: 3px solid var(--primary);
+    }
+
+    .kana-cell.empty {
+      background: transparent;
+      box-shadow: none;
+      cursor: default;
+    }
+
+    .pad-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .pad-button {
+      background: #e0efff;
+      font-size: 1.9rem;
+      min-height: 90px;
+    }
+
+    .pad-button:hover:not(.center) {
+      background: #d0e8ff;
+    }
+
+    .pad-button.center {
+      background: transparent;
+      box-shadow: none;
+      cursor: default;
+    }
+
+    .action-button,
+    .toggle-button {
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 1rem;
+      min-height: 82px;
+    }
+
+    .action-button.secondary {
+      background: #f59e0b;
+    }
+
+    .action-button.danger {
+      background: #dc2626;
+    }
+
+    .action-button.wide {
+      grid-column: span 2;
+    }
+
+    .control-group {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .label-grid {
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    select {
+      width: 100%;
+      min-height: 56px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        padding: 0;
+      }
+
+      .control-group {
+        grid-template-columns: 1fr;
+      }
+
+      .action-button.wide {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>日本語入力支援アプリ</h1>
+        <p class="description">大きな方向キーで行選択・文字選択し、ひらがな文章を入力します。iPadのような大きめUIを想定しています。</p>
+      </div>
+      <div id="statusText" class="status">初期状態: 「な」で行選択です。</div>
+    </header>
+
+    <section class="card">
+      <p class="section-title">入力済み文字</p>
+      <div class="display-card">
+        <div id="inputTextDisplay" class="display-text"></div>
+      </div>
+      <div class="control-group">
+        <button id="readButton" class="action-button">読み上げ</button>
+        <button id="deleteButton" class="action-button secondary">削除</button>
+        <button id="clearButton" class="action-button danger">クリア</button>
+        <button id="spaceButton" class="action-button secondary">空白</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <p class="section-title">行選択</p>
+      <div class="row-grid">
+        <button class="row-cell" data-row="あ">あ</button>
+        <button class="row-cell" data-row="か">か</button>
+        <button class="row-cell" data-row="さ">さ</button>
+        <button class="row-cell" data-row="た">た</button>
+        <button class="row-cell" data-row="な">な</button>
+        <button class="row-cell" data-row="は">は</button>
+        <button class="row-cell" data-row="ま">ま</button>
+        <button class="row-cell" data-row="や">や</button>
+        <button class="row-cell" data-row="ら">ら</button>
+        <div class="row-cell empty"></div>
+        <button class="row-cell" data-row="わ">わ</button>
+        <div class="row-cell empty"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <p class="section-title">段選択</p>
+      <div class="kana-grid">
+        <div class="kana-cell empty"></div>
+        <button class="kana-cell" data-kana="up" id="kanaUp"></button>
+        <div class="kana-cell empty"></div>
+        <button class="kana-cell" data-kana="left" id="kanaLeft"></button>
+        <button class="kana-cell" data-kana="center" id="kanaCenter"></button>
+        <button class="kana-cell" data-kana="right" id="kanaRight"></button>
+        <div class="kana-cell empty"></div>
+        <button class="kana-cell" data-kana="down" id="kanaDown"></button>
+        <div class="kana-cell empty"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <p class="section-title">方向キー</p>
+      <div class="pad-grid">
+        <button class="pad-button" data-dir="NW">↖</button>
+        <button class="pad-button" data-dir="N">↑</button>
+        <button class="pad-button" data-dir="NE">↗</button>
+        <button class="pad-button" data-dir="W">←</button>
+        <div class="pad-button center"></div>
+        <button class="pad-button" data-dir="E">→</button>
+        <button class="pad-button" data-dir="SW">↙</button>
+        <button class="pad-button" data-dir="S">↓</button>
+        <button class="pad-button" data-dir="SE">↘</button>
+      </div>
+      <div class="control-group">
+        <button id="confirmButton" class="action-button wide">確定</button>
+        <button id="settingsToggleButton" class="action-button secondary">設定</button>
+      </div>
+    </section>
+
+    <section class="card hidden" id="settingsPanel">
+      <p class="section-title">設定</p>
+      <div class="label-grid">
+        <label>
+          ボタンサイズ
+          <select id="buttonSizeSelect">
+            <option value="standard">標準</option>
+            <option value="large">大</option>
+            <option value="xlarge">特大</option>
+          </select>
+        </label>
+        <label>
+          文字サイズ
+          <select id="textSizeSelect">
+            <option value="standard">標準</option>
+            <option value="large">大</option>
+            <option value="xlarge">特大</option>
+          </select>
+        </label>
+        <label>
+          カーソル色
+          <select id="highlightColorSelect">
+            <option value="#2563eb">青</option>
+            <option value="#16a34a">緑</option>
+            <option value="#dc2626">赤</option>
+            <option value="#d97706">オレンジ</option>
+          </select>
+        </label>
+      </div>
+      <div class="control-group">
+        <button id="closeSettingsButton" class="action-button wide">閉じる</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_INPUT = 'jp-access-input-text';
+    const STORAGE_SETTINGS = 'jp-access-settings';
+
+    const ROW_NAV = {
+      'あ': {NW:'あ',N:'あ',NE:'か',W:'あ',E:'か',SW:'た',S:'た',SE:'な'},
+      'か': {NW:'あ',N:'か',NE:'さ',W:'あ',E:'さ',SW:'な',S:'な',SE:'は'},
+      'さ': {NW:'か',N:'さ',NE:'さ',W:'か',E:'さ',SW:'は',S:'は',SE:'は'},
+      'た': {NW:'あ',N:'あ',NE:'な',W:'た',E:'な',SW:'ま',S:'ま',SE:'や'},
+      'な': {NW:'あ',N:'か',NE:'さ',W:'た',E:'は',SW:'ま',S:'や',SE:'ら'},
+      'は': {NW:'か',N:'さ',NE:'さ',W:'な',E:'は',SW:'や',S:'ら',SE:'ら'},
+      'ま': {NW:'た',N:'た',NE:'や',W:'ま',E:'や',SW:'ま',S:'わ',SE:'ら'},
+      'や': {NW:'な',N:'な',NE:'は',W:'ま',E:'ら',SW:'わ',S:'わ',SE:'ら'},
+      'ら': {NW:'な',N:'は',NE:'は',W:'や',E:'ら',SW:'わ',S:'わ',SE:'わ'},
+      'わ': {NW:'ま',N:'や',NE:'ら',W:'わ',E:'わ',SW:'わ',S:'わ',SE:'わ'}
+    };
+
+    const KANA_MAP = {
+      'あ': {center:'あ',left:'い',up:'う',right:'え',down:'お'},
+      'か': {center:'か',left:'き',up:'く',right:'け',down:'こ'},
+      'さ': {center:'さ',left:'し',up:'す',right:'せ',down:'そ'},
+      'た': {center:'た',left:'ち',up:'つ',right:'て',down:'と'},
+      'な': {center:'な',left:'に',up:'ぬ',right:'ね',down:'の'},
+      'は': {center:'は',left:'ひ',up:'ふ',right:'へ',down:'ほ'},
+      'ま': {center:'ま',left:'み',up:'む',right:'め',down:'も'},
+      'や': {center:'や',left:'ー',up:'ゆ',right:'ー',down:'よ'},
+      'ら': {center:'ら',left:'り',up:'る',right:'れ',down:'ろ'},
+      'わ': {center:'わ',left:'を',up:'ん',right:'ー',down:'ー'}
+    };
+
+    const KANA_NAV = {
+      center: {N:'up',S:'down',W:'left',E:'right',NW:'up',NE:'up',SW:'down',SE:'down'},
+      up: {N:'up',S:'center',W:'up',E:'up',NW:'up',NE:'up',SW:'center',SE:'center'},
+      down: {N:'center',S:'down',W:'down',E:'down',NW:'center',NE:'center',SW:'down',SE:'down'},
+      left: {N:'left',S:'left',W:'left',E:'center',NW:'left',NE:'center',SW:'left',SE:'center'},
+      right: {N:'right',S:'right',W:'center',E:'right',NW:'center',NE:'right',SW:'center',SE:'right'}
+    };
+
+    const state = {
+      mode: 'rowSelection',
+      selectedRow: 'な',
+      selectedKanaPos: 'center',
+      inputText: '',
+      settings: {
+        buttonSize: 'large',
+        textSize: 'large',
+        highlightColor: '#2563eb'
+      }
+    };
+
+    const inputTextDisplay = document.getElementById('inputTextDisplay');
+    const statusText = document.getElementById('statusText');
+    const rowCells = Array.from(document.querySelectorAll('.row-cell[data-row]'));
+    const kanaCells = {
+      up: document.getElementById('kanaUp'),
+      left: document.getElementById('kanaLeft'),
+      center: document.getElementById('kanaCenter'),
+      right: document.getElementById('kanaRight'),
+      down: document.getElementById('kanaDown')
+    };
+    const directionButtons = Array.from(document.querySelectorAll('.pad-button[data-dir]'));
+    const confirmButton = document.getElementById('confirmButton');
+    const readButton = document.getElementById('readButton');
+    const deleteButton = document.getElementById('deleteButton');
+    const clearButton = document.getElementById('clearButton');
+    const spaceButton = document.getElementById('spaceButton');
+    const settingsToggleButton = document.getElementById('settingsToggleButton');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const closeSettingsButton = document.getElementById('closeSettingsButton');
+    const buttonSizeSelect = document.getElementById('buttonSizeSelect');
+    const textSizeSelect = document.getElementById('textSizeSelect');
+    const highlightColorSelect = document.getElementById('highlightColorSelect');
+
+    function saveData() {
+      localStorage.setItem(STORAGE_INPUT, state.inputText);
+      localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(state.settings));
+    }
+
+    function restoreData() {
+      const storedText = localStorage.getItem(STORAGE_INPUT);
+      const storedSettings = localStorage.getItem(STORAGE_SETTINGS);
+      if (storedText !== null) state.inputText = storedText;
+      if (storedSettings) {
+        try {
+          Object.assign(state.settings, JSON.parse(storedSettings));
+        } catch (error) {
+          console.warn('設定の復元に失敗しました', error);
+        }
+      }
+    }
+
+    function updateUI() {
+      inputTextDisplay.textContent = state.inputText || 'ここに入力内容が表示されます。';
+      rowCells.forEach((cell) => {
+        const row = cell.dataset.row;
+        cell.classList.toggle('active', row === state.selectedRow);
+      });
+
+      const kana = KANA_MAP[state.selectedRow];
+      Object.entries(kanaCells).forEach(([pos, cell]) => {
+        cell.textContent = kana[pos];
+        cell.classList.toggle('active', state.selectedKanaPos === pos);
+      });
+
+      statusText.textContent = state.mode === 'rowSelection'
+        ? `行選択中: ${state.selectedRow}。確定で段選択へ。`
+        : `段選択中: ${KANA_MAP[state.selectedRow][state.selectedKanaPos]}。確定で入力。`;
+
+      buttonSizeSelect.value = state.settings.buttonSize;
+      textSizeSelect.value = state.settings.textSize;
+      highlightColorSelect.value = state.settings.highlightColor;
+      applyStyles();
+    }
+
+    function applyStyles() {
+      document.documentElement.style.setProperty('--primary', state.settings.highlightColor);
+      document.documentElement.style.setProperty('--accent', state.settings.highlightColor);
+      document.documentElement.style.setProperty('--button-size', state.settings.buttonSize === 'standard' ? '92px' : state.settings.buttonSize === 'large' ? '108px' : '126px');
+      document.documentElement.style.setProperty('--display-font-size', state.settings.textSize === 'standard' ? '46px' : state.settings.textSize === 'large' ? '54px' : '62px');
+      rowCells.forEach((cell) => cell.style.fontSize = state.settings.textSize === 'xlarge' ? '2rem' : state.settings.textSize === 'large' ? '1.85rem' : '1.6rem');
+      Object.values(kanaCells).forEach((cell) => cell.style.fontSize = state.settings.textSize === 'xlarge' ? '2.4rem' : state.settings.textSize === 'large' ? '2.2rem' : '2rem');
+      directionButtons.forEach((button) => button.style.fontSize = state.settings.textSize === 'xlarge' ? '2.4rem' : state.settings.textSize === 'large' ? '2.1rem' : '1.9rem');
+      [confirmButton, readButton, deleteButton, clearButton, spaceButton, settingsToggleButton, closeSettingsButton].forEach((button) => {
+        button.style.fontSize = state.settings.textSize === 'xlarge' ? '1.16rem' : state.settings.textSize === 'large' ? '1.12rem' : '1rem';
+      });
+    }
+
+    function moveRow(dir) {
+      state.selectedRow = ROW_NAV[state.selectedRow][dir] || state.selectedRow;
+      state.mode = 'rowSelection';
+      updateUI();
+    }
+
+    function moveKana(dir) {
+      state.selectedKanaPos = KANA_NAV[state.selectedKanaPos][dir] || state.selectedKanaPos;
+      state.mode = 'kanaSelection';
+      updateUI();
+    }
+
+    function handleDirection(dir) {
+      if (state.mode === 'rowSelection') moveRow(dir);
+      else moveKana(dir);
+    }
+
+    function confirmSelection() {
+      if (state.mode === 'rowSelection') {
+        state.mode = 'kanaSelection';
+        state.selectedKanaPos = 'center';
+      } else {
+        state.inputText += KANA_MAP[state.selectedRow][state.selectedKanaPos];
+        state.mode = 'rowSelection';
+        state.selectedRow = 'な';
+        state.selectedKanaPos = 'center';
+        saveData();
+      }
+      updateUI();
+    }
+
+    function setRowSelection(row) {
+      state.selectedRow = row;
+      state.mode = 'rowSelection';
+      updateUI();
+    }
+
+    function setKanaSelection(pos) {
+      state.selectedKanaPos = pos;
+      state.mode = 'kanaSelection';
+      updateUI();
+    }
+
+    function readAloud() {
+      const text = state.inputText.trim();
+      if (!text) return;
+      if (!window.speechSynthesis) {
+        alert('このブラウザは読み上げをサポートしていません。');
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function deleteChar() {
+      state.inputText = state.inputText.slice(0, -1);
+      saveData();
+      updateUI();
+    }
+
+    function clearText() {
+      state.inputText = '';
+      saveData();
+      updateUI();
+    }
+
+    function insertSpace() {
+      state.inputText += ' ';
+      saveData();
+      updateUI();
+    }
+
+    function toggleSettings() {
+      settingsPanel.classList.toggle('hidden');
+    }
+
+    rowCells.forEach((cell) => cell.addEventListener('click', () => setRowSelection(cell.dataset.row)));
+    Object.entries(kanaCells).forEach(([pos, cell]) => {
+      cell.addEventListener('click', () => setKanaSelection(pos));
+    });
+    directionButtons.forEach((button) => button.addEventListener('click', () => handleDirection(button.dataset.dir)));
+    confirmButton.addEventListener('click', confirmSelection);
+    readButton.addEventListener('click', readAloud);
+    deleteButton.addEventListener('click', deleteChar);
+    clearButton.addEventListener('click', clearText);
+    spaceButton.addEventListener('click', insertSpace);
+    settingsToggleButton.addEventListener('click', toggleSettings);
+    closeSettingsButton.addEventListener('click', toggleSettings);
+    buttonSizeSelect.addEventListener('change', (event) => {
+      state.settings.buttonSize = event.target.value;
+      saveData();
+      applyStyles();
+    });
+    textSizeSelect.addEventListener('change', (event) => {
+      state.settings.textSize = event.target.value;
+      saveData();
+      applyStyles();
+    });
+    highlightColorSelect.addEventListener('change', (event) => {
+      state.settings.highlightColor = event.target.value;
+      saveData();
+      updateUI();
+    });
+
+    restoreData();
+    updateUI();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
