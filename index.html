@@ -27,7 +27,17 @@
       --display-fs: 30px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* 入力表示欄はコピー可能にする */
+    .display-text { user-select: text; -webkit-user-select: text; }
 
     html, body {
       height: 100%;
@@ -166,9 +176,10 @@
       cursor: default;
     }
 
-    /* ── モードインジケーター ── */
+    /* ── モードインジケーター（outline内側描画でクリップなし） ── */
     .mode-active {
-      box-shadow: 0 0 0 3px var(--primary), 0 4px 16px rgba(15, 23, 42, 0.08);
+      outline: 3px solid var(--primary);
+      outline-offset: -3px;
       background: rgba(37, 99, 235, 0.05);
     }
 
@@ -588,7 +599,14 @@
     }
 
     function deleteChar()  { state.inputText = state.inputText.slice(0, -1); saveData(); updateUI(); }
-    function clearText()   { state.inputText = ''; saveData(); updateUI(); }
+    function clearText() {
+      state.inputText = '';
+      state.selectedRow = 'な';
+      state.selectedKanaPos = 'center';
+      state.mode = 'rowSelection';
+      saveData();
+      updateUI();
+    }
     function insertSpace() { state.inputText += ' '; saveData(); updateUI(); }
     function toggleSettings() { settingsOverlay.classList.toggle('open'); }
 
@@ -621,6 +639,12 @@
     } else {
       window.addEventListener('resize', applyContainerHeight);
     }
+
+    /* Chromeのホバーメニュー（コピー・検索・翻訳等）を抑制 */
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.addEventListener('selectstart', (e) => {
+      if (!e.target.closest('.display-text')) e.preventDefault();
+    });
 
     restoreData();
     updateUI();
