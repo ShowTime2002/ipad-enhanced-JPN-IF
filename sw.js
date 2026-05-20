@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jpn-input-v4';
+const CACHE_NAME = 'jpn-input-v5';
 const STATIC_ASSETS = ['./manifest.json', './icon.svg'];
 
 self.addEventListener('install', (event) => {

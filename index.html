@@ -30,8 +30,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      height: 100dvh;
-      height: 100svh;
+      height: 100%;
       overflow: hidden;
       width: 100%;
       background: var(--bg);
@@ -45,12 +44,13 @@
 
     /* ── メインコンテナ: 3行グリッド ── */
     .container {
-      height: 100%;
+      /* 高さはJSでwindow.visualViewport.heightから設定 */
       display: grid;
       grid-template-rows: auto auto 1fr;
       gap: 6px;
       max-width: 960px;
       margin: 0 auto;
+      overflow: hidden;
     }
 
     /* ── カード共通 ── */
@@ -164,6 +164,12 @@
       background: transparent;
       box-shadow: none;
       cursor: default;
+    }
+
+    /* ── モードインジケーター ── */
+    .mode-active {
+      box-shadow: 0 0 0 3px var(--primary), 0 4px 16px rgba(15, 23, 42, 0.08);
+      background: rgba(37, 99, 235, 0.05);
     }
 
     /* ── Row 3: 方向キー（残り全高） ── */
@@ -315,7 +321,7 @@
 
     <!-- Row 2: 行選択 + 段選択 横並び -->
     <div class="selection-row">
-      <div class="card">
+      <div class="card" id="rowCard">
         <p class="section-title">行選択</p>
         <div class="row-grid">
           <button class="row-cell" data-row="あ">あ</button>
@@ -333,7 +339,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" id="kanaCard">
         <p class="section-title">段選択</p>
         <div class="kana-grid">
           <div    class="kana-cell empty"></div>
@@ -454,6 +460,9 @@
       settings: { buttonSize: 'standard', textSize: 'standard', highlightColor: '#2563eb' }
     };
 
+    const container          = document.querySelector('.container');
+    const rowCard            = document.getElementById('rowCard');
+    const kanaCard           = document.getElementById('kanaCard');
     const inputTextDisplay   = document.getElementById('inputTextDisplay');
     const statusText         = document.getElementById('statusText');
     const rowCells           = Array.from(document.querySelectorAll('.row-cell[data-row]'));
@@ -494,6 +503,9 @@
 
     function updateUI() {
       inputTextDisplay.textContent = state.inputText || 'ここに入力内容が表示されます。';
+
+      rowCard.classList.toggle('mode-active',  state.mode === 'rowSelection');
+      kanaCard.classList.toggle('mode-active', state.mode === 'kanaSelection');
 
       rowCells.forEach((cell) => {
         cell.classList.toggle('active', cell.dataset.row === state.selectedRow);
@@ -597,6 +609,18 @@
     buttonSizeSelect.addEventListener('change', (e) => { state.settings.buttonSize = e.target.value; saveData(); applyStyles(); });
     textSizeSelect.addEventListener('change',   (e) => { state.settings.textSize   = e.target.value; saveData(); applyStyles(); });
     highlightColorSelect.addEventListener('change', (e) => { state.settings.highlightColor = e.target.value; saveData(); updateUI(); });
+
+    /* ブラウザUIを除いた正確な高さをコンテナに適用 */
+    function applyContainerHeight() {
+      const h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+      container.style.height = h + 'px';
+    }
+    applyContainerHeight();
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', applyContainerHeight);
+    } else {
+      window.addEventListener('resize', applyContainerHeight);
+    }
 
     restoreData();
     updateUI();
