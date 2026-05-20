@@ -19,13 +19,11 @@
       --muted: #475569;
       --primary: #2563eb;
       --card-radius: 16px;
-      /* 設定で変更 */
       --row-cell-h: 44px;
       --row-cell-fs: 1.1rem;
       --kana-cell-fs: 1.3rem;
       --action-h: 50px;
       --action-fs: 0.88rem;
-      --confirm-h: 56px;
       --display-fs: 30px;
     }
 
@@ -85,37 +83,36 @@
       min-height: 46px;
     }
 
+    .status-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+
     .status-bar {
       font-size: 0.78rem;
       font-weight: 600;
       color: #1d4ed8;
       background: #eef2ff;
       border-radius: 8px;
-      padding: 4px 10px;
-      line-height: 1.4;
+      padding: 5px 10px;
     }
 
-    .action-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-    }
-
-    .action-btn {
+    .settings-btn-sm {
       border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: var(--action-fs);
-      min-height: var(--action-h);
+      border-radius: 10px;
+      background: #f59e0b;
       color: #fff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 5px 14px;
+      min-height: 32px;
+      cursor: pointer;
+      white-space: nowrap;
       transition: opacity 0.15s;
     }
-    .action-btn:active { opacity: 0.75; }
-    .action-btn.read  { background: var(--primary); }
-    .action-btn.del   { background: #f59e0b; }
-    .action-btn.clear { background: #dc2626; }
-    .action-btn.space { background: #64748b; }
+    .settings-btn-sm:active { opacity: 0.75; }
 
     /* ── Row 2: 行選択 + 段選択 横並び ── */
     .selection-row {
@@ -199,49 +196,46 @@
       justify-content: center;
       transition: background 0.15s, transform 0.1s;
     }
-    .pad-button:active:not(.center) {
+    .pad-button:active:not(.confirm-center) {
       background: #bfdbfe;
       transform: scale(0.95);
     }
-    .pad-button.center {
-      background: transparent;
-      box-shadow: none;
-      cursor: default;
+
+    /* 確定ボタン（方向キー中央） */
+    .pad-button.confirm-center {
+      background: var(--primary);
+      color: #fff;
+      font-size: 1.1rem;
+      border-radius: 14px;
+    }
+    .pad-button.confirm-center:active {
+      opacity: 0.8;
+      transform: scale(0.95);
     }
 
-    .pad-controls {
+    /* ── 操作ボタン行（方向キー下） ── */
+    .action-row {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
       flex-shrink: 0;
     }
 
-    .confirm-btn {
+    .action-btn {
       border: none;
       border-radius: 12px;
-      background: var(--primary);
-      color: #fff;
-      font-size: 1.05rem;
-      font-weight: 700;
-      min-height: var(--confirm-h);
       cursor: pointer;
+      font-weight: 700;
+      font-size: var(--action-fs);
+      min-height: var(--action-h);
+      color: #fff;
       transition: opacity 0.15s;
     }
-    .confirm-btn:active { opacity: 0.75; }
-
-    .settings-btn {
-      border: none;
-      border-radius: 12px;
-      background: #f59e0b;
-      color: #fff;
-      font-size: 0.85rem;
-      font-weight: 700;
-      min-height: var(--confirm-h);
-      min-width: 60px;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    .settings-btn:active { opacity: 0.75; }
+    .action-btn:active { opacity: 0.75; }
+    .action-btn.read  { background: var(--primary); }
+    .action-btn.del   { background: #f59e0b; }
+    .action-btn.clear { background: #dc2626; }
+    .action-btn.space { background: #64748b; }
 
     /* ── 設定オーバーレイ ── */
     .settings-overlay {
@@ -313,12 +307,9 @@
     <!-- Row 1: 入力エリア -->
     <div class="card">
       <div id="inputTextDisplay" class="display-text"></div>
-      <div id="statusText" class="status-bar">行選択: な行</div>
-      <div class="action-row">
-        <button id="readButton"   class="action-btn read" >読み上げ</button>
-        <button id="deleteButton" class="action-btn del"  >削除</button>
-        <button id="clearButton"  class="action-btn clear">クリア</button>
-        <button id="spaceButton"  class="action-btn space">空白</button>
+      <div class="status-row">
+        <div id="statusText" class="status-bar">行選択: な行</div>
+        <button id="settingsToggleButton" class="settings-btn-sm">設定</button>
       </div>
     </div>
 
@@ -358,7 +349,7 @@
       </div>
     </div>
 
-    <!-- Row 3: 方向キー（残り全高を使用） -->
+    <!-- Row 3: 方向キー（残り全高）+ 操作ボタン -->
     <div class="card pad-card">
       <p class="section-title">方向キー</p>
       <div class="pad-grid">
@@ -366,15 +357,17 @@
         <button class="pad-button" data-dir="N" >↑</button>
         <button class="pad-button" data-dir="NE">↗</button>
         <button class="pad-button" data-dir="W" >←</button>
-        <div    class="pad-button center"></div>
+        <button id="confirmButton" class="pad-button confirm-center">確定</button>
         <button class="pad-button" data-dir="E" >→</button>
         <button class="pad-button" data-dir="SW">↙</button>
         <button class="pad-button" data-dir="S" >↓</button>
         <button class="pad-button" data-dir="SE">↘</button>
       </div>
-      <div class="pad-controls">
-        <button id="confirmButton"       class="confirm-btn">確定</button>
-        <button id="settingsToggleButton" class="settings-btn">設定</button>
+      <div class="action-row">
+        <button id="readButton"   class="action-btn read" >読み上げ</button>
+        <button id="deleteButton" class="action-btn del"  >削除</button>
+        <button id="clearButton"  class="action-btn clear">クリア</button>
+        <button id="spaceButton"  class="action-btn space">空白</button>
       </div>
     </div>
 
@@ -461,28 +454,28 @@
       settings: { buttonSize: 'standard', textSize: 'standard', highlightColor: '#2563eb' }
     };
 
-    const inputTextDisplay     = document.getElementById('inputTextDisplay');
-    const statusText           = document.getElementById('statusText');
-    const rowCells             = Array.from(document.querySelectorAll('.row-cell[data-row]'));
-    const kanaCells            = {
+    const inputTextDisplay   = document.getElementById('inputTextDisplay');
+    const statusText         = document.getElementById('statusText');
+    const rowCells           = Array.from(document.querySelectorAll('.row-cell[data-row]'));
+    const kanaCells          = {
       up:     document.getElementById('kanaUp'),
       left:   document.getElementById('kanaLeft'),
       center: document.getElementById('kanaCenter'),
       right:  document.getElementById('kanaRight'),
       down:   document.getElementById('kanaDown')
     };
-    const directionButtons       = Array.from(document.querySelectorAll('.pad-button[data-dir]'));
-    const confirmButton          = document.getElementById('confirmButton');
-    const readButton             = document.getElementById('readButton');
-    const deleteButton           = document.getElementById('deleteButton');
-    const clearButton            = document.getElementById('clearButton');
-    const spaceButton            = document.getElementById('spaceButton');
-    const settingsToggleButton   = document.getElementById('settingsToggleButton');
-    const settingsOverlay        = document.getElementById('settingsOverlay');
-    const closeSettingsButton    = document.getElementById('closeSettingsButton');
-    const buttonSizeSelect       = document.getElementById('buttonSizeSelect');
-    const textSizeSelect         = document.getElementById('textSizeSelect');
-    const highlightColorSelect   = document.getElementById('highlightColorSelect');
+    const directionButtons     = Array.from(document.querySelectorAll('.pad-button[data-dir]'));
+    const confirmButton        = document.getElementById('confirmButton');
+    const readButton           = document.getElementById('readButton');
+    const deleteButton         = document.getElementById('deleteButton');
+    const clearButton          = document.getElementById('clearButton');
+    const spaceButton          = document.getElementById('spaceButton');
+    const settingsToggleButton = document.getElementById('settingsToggleButton');
+    const settingsOverlay      = document.getElementById('settingsOverlay');
+    const closeSettingsButton  = document.getElementById('closeSettingsButton');
+    const buttonSizeSelect     = document.getElementById('buttonSizeSelect');
+    const textSizeSelect       = document.getElementById('textSizeSelect');
+    const highlightColorSelect = document.getElementById('highlightColorSelect');
 
     function saveData() {
       localStorage.setItem(STORAGE_INPUT,    state.inputText);
@@ -529,13 +522,12 @@
       const bs = state.settings.buttonSize;
       root.style.setProperty('--row-cell-h', bs === 'xlarge' ? '58px' : bs === 'large' ? '52px' : '44px');
       root.style.setProperty('--action-h',   bs === 'xlarge' ? '58px' : bs === 'large' ? '54px' : '50px');
-      root.style.setProperty('--confirm-h',  bs === 'xlarge' ? '68px' : bs === 'large' ? '62px' : '56px');
 
       const ts = state.settings.textSize;
-      root.style.setProperty('--display-fs',  ts === 'xlarge' ? '38px'  : ts === 'large' ? '32px'  : '26px');
-      root.style.setProperty('--row-cell-fs', ts === 'xlarge' ? '1.3rem': ts === 'large' ? '1.15rem': '1rem');
-      root.style.setProperty('--kana-cell-fs',ts === 'xlarge' ? '1.55rem':ts === 'large' ? '1.4rem' : '1.25rem');
-      root.style.setProperty('--action-fs',   ts === 'xlarge' ? '1rem'  : ts === 'large' ? '0.92rem': '0.82rem');
+      root.style.setProperty('--display-fs',   ts === 'xlarge' ? '38px'   : ts === 'large' ? '32px'   : '26px');
+      root.style.setProperty('--row-cell-fs',  ts === 'xlarge' ? '1.3rem' : ts === 'large' ? '1.15rem': '1rem');
+      root.style.setProperty('--kana-cell-fs', ts === 'xlarge' ? '1.55rem': ts === 'large' ? '1.4rem' : '1.25rem');
+      root.style.setProperty('--action-fs',    ts === 'xlarge' ? '1rem'   : ts === 'large' ? '0.92rem': '0.82rem');
     }
 
     function moveRow(dir) {
@@ -569,17 +561,8 @@
       updateUI();
     }
 
-    function setRowSelection(row) {
-      state.selectedRow = row;
-      state.mode = 'rowSelection';
-      updateUI();
-    }
-
-    function setKanaSelection(pos) {
-      state.selectedKanaPos = pos;
-      state.mode = 'kanaSelection';
-      updateUI();
-    }
+    function setRowSelection(row)  { state.selectedRow = row;  state.mode = 'rowSelection';  updateUI(); }
+    function setKanaSelection(pos) { state.selectedKanaPos = pos; state.mode = 'kanaSelection'; updateUI(); }
 
     function readAloud() {
       const text = state.inputText.trim();
@@ -595,10 +578,7 @@
     function deleteChar()  { state.inputText = state.inputText.slice(0, -1); saveData(); updateUI(); }
     function clearText()   { state.inputText = ''; saveData(); updateUI(); }
     function insertSpace() { state.inputText += ' '; saveData(); updateUI(); }
-
-    function toggleSettings() {
-      settingsOverlay.classList.toggle('open');
-    }
+    function toggleSettings() { settingsOverlay.classList.toggle('open'); }
 
     rowCells.forEach((cell) => cell.addEventListener('click', () => setRowSelection(cell.dataset.row)));
     Object.entries(kanaCells).forEach(([pos, cell]) => {
@@ -614,15 +594,9 @@
     closeSettingsButton.addEventListener('click', toggleSettings);
     settingsOverlay.addEventListener('click', (e) => { if (e.target === settingsOverlay) toggleSettings(); });
 
-    buttonSizeSelect.addEventListener('change', (e) => {
-      state.settings.buttonSize = e.target.value; saveData(); applyStyles();
-    });
-    textSizeSelect.addEventListener('change', (e) => {
-      state.settings.textSize = e.target.value; saveData(); applyStyles();
-    });
-    highlightColorSelect.addEventListener('change', (e) => {
-      state.settings.highlightColor = e.target.value; saveData(); updateUI();
-    });
+    buttonSizeSelect.addEventListener('change', (e) => { state.settings.buttonSize = e.target.value; saveData(); applyStyles(); });
+    textSizeSelect.addEventListener('change',   (e) => { state.settings.textSize   = e.target.value; saveData(); applyStyles(); });
+    highlightColorSelect.addEventListener('change', (e) => { state.settings.highlightColor = e.target.value; saveData(); updateUI(); });
 
     restoreData();
     updateUI();

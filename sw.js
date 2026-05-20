@@ -1,8 +1,8 @@
-const CACHE_NAME = 'jpn-input-v3';
-const ASSETS = ['./', './index.html', './manifest.json', './icon.svg'];
+const CACHE_NAME = 'jpn-input-v4';
+const STATIC_ASSETS = ['./manifest.json', './icon.svg'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
@@ -16,7 +16,23 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const accept = event.request.headers.get('accept') || '';
+
+  // index.html は常にネットワーク優先（オフライン時のみキャッシュ使用）
+  if (accept.includes('text/html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          caches.open(CACHE_NAME).then((c) => c.put(event.request, res.clone()));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // 静的アセットはキャッシュ優先
   event.respondWith(
-    caches.match(event.request).then((response) => response || fetch(event.request))
+    caches.match(event.request).then((res) => res || fetch(event.request))
   );
 });
