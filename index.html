@@ -182,6 +182,16 @@
       cursor: default;
     }
 
+    .row-cell.mod-key {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .row-cell.mod-key.active {
+      background: rgba(217, 119, 6, 0.2);
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.3);
+      border: 2px solid #d97706;
+    }
+
     /* ── モードインジケーター（outline内側描画でクリップなし） ── */
     .mode-active {
       outline: 3px solid var(--primary);
@@ -351,8 +361,11 @@
           <button class="row-cell" data-row="ま">ま</button>
           <button class="row-cell" data-row="や">や</button>
           <button class="row-cell" data-row="ら">ら</button>
-          <div   class="row-cell empty"></div>
+          <button class="row-cell mod-key" data-row="dakuten">゛</button>
           <button class="row-cell" data-row="わ">わ</button>
+          <button class="row-cell mod-key" data-row="handakuten">゜</button>
+          <button class="row-cell mod-key" data-row="kogaki">小</button>
+          <div   class="row-cell empty"></div>
           <div   class="row-cell empty"></div>
         </div>
       </div>
@@ -438,16 +451,19 @@
     const STORAGE_SETTINGS = 'jp-access-settings';
 
     const ROW_NAV = {
-      'あ': {NW:'あ',N:'あ',NE:'か',W:'あ',E:'か',SW:'た',S:'た',SE:'な'},
-      'か': {NW:'あ',N:'か',NE:'さ',W:'あ',E:'さ',SW:'な',S:'な',SE:'は'},
-      'さ': {NW:'か',N:'さ',NE:'さ',W:'か',E:'さ',SW:'は',S:'は',SE:'は'},
-      'た': {NW:'あ',N:'あ',NE:'な',W:'た',E:'な',SW:'ま',S:'ま',SE:'や'},
-      'な': {NW:'あ',N:'か',NE:'さ',W:'た',E:'は',SW:'ま',S:'や',SE:'ら'},
-      'は': {NW:'か',N:'さ',NE:'さ',W:'な',E:'は',SW:'や',S:'ら',SE:'ら'},
-      'ま': {NW:'た',N:'た',NE:'や',W:'ま',E:'や',SW:'ま',S:'わ',SE:'ら'},
-      'や': {NW:'な',N:'な',NE:'は',W:'ま',E:'ら',SW:'わ',S:'わ',SE:'ら'},
-      'ら': {NW:'な',N:'は',NE:'は',W:'や',E:'ら',SW:'わ',S:'わ',SE:'わ'},
-      'わ': {NW:'ま',N:'や',NE:'ら',W:'わ',E:'わ',SW:'わ',S:'わ',SE:'わ'}
+      'あ':        {NW:'あ',N:'あ',NE:'か',W:'あ',E:'か',SW:'た',S:'た',SE:'な'},
+      'か':        {NW:'あ',N:'か',NE:'さ',W:'あ',E:'さ',SW:'な',S:'な',SE:'は'},
+      'さ':        {NW:'か',N:'さ',NE:'さ',W:'か',E:'さ',SW:'は',S:'は',SE:'は'},
+      'た':        {NW:'あ',N:'あ',NE:'な',W:'た',E:'な',SW:'ま',S:'ま',SE:'や'},
+      'な':        {NW:'あ',N:'か',NE:'さ',W:'た',E:'は',SW:'ま',S:'や',SE:'ら'},
+      'は':        {NW:'か',N:'さ',NE:'さ',W:'な',E:'は',SW:'や',S:'ら',SE:'ら'},
+      'ま':        {NW:'た',N:'た',NE:'や',W:'ま',E:'や',SW:'dakuten',S:'dakuten',SE:'わ'},
+      'や':        {NW:'な',N:'な',NE:'は',W:'ま',E:'ら',SW:'dakuten',S:'わ',SE:'handakuten'},
+      'ら':        {NW:'な',N:'は',NE:'は',W:'や',E:'ら',SW:'わ',S:'handakuten',SE:'handakuten'},
+      'わ':        {NW:'ま',N:'や',NE:'ら',W:'dakuten',E:'handakuten',SW:'kogaki',S:'わ',SE:'handakuten'},
+      'dakuten':   {NW:'ま',N:'ま',NE:'や',W:'dakuten',E:'わ',SW:'kogaki',S:'kogaki',SE:'わ'},
+      'handakuten':{NW:'や',N:'ら',NE:'ら',W:'わ',E:'handakuten',SW:'kogaki',S:'handakuten',SE:'handakuten'},
+      'kogaki':    {NW:'dakuten',N:'dakuten',NE:'わ',W:'kogaki',E:'kogaki',SW:'kogaki',S:'kogaki',SE:'kogaki'}
     };
 
     const KANA_MAP = {
@@ -470,6 +486,22 @@
       left:   {N:'left',S:'left',W:'left',E:'center',NW:'left',NE:'center',SW:'left',SE:'center'},
       right:  {N:'right',S:'right',W:'center',E:'right',NW:'center',NE:'right',SW:'center',SE:'right'}
     };
+
+    const DAKUTEN_MAP = {
+      'か':'が','き':'ぎ','く':'ぐ','け':'げ','こ':'ご',
+      'さ':'ざ','し':'じ','す':'ず','せ':'ぜ','そ':'ぞ',
+      'た':'だ','ち':'ぢ','つ':'づ','て':'で','と':'ど',
+      'は':'ば','ひ':'び','ふ':'ぶ','へ':'べ','ほ':'ぼ',
+      'う':'ゔ'
+    };
+    const HANDAKUTEN_MAP = {
+      'は':'ぱ','ひ':'ぴ','ふ':'ぷ','へ':'ぺ','ほ':'ぽ'
+    };
+    const KOGAKI_MAP = {
+      'あ':'ぁ','い':'ぃ','う':'ぅ','え':'ぇ','お':'ぉ',
+      'つ':'っ','や':'ゃ','ゆ':'ゅ','よ':'ょ','わ':'ゎ'
+    };
+    const MODIFIER_LABEL = {dakuten:'゛', handakuten:'゜', kogaki:'小'};
 
     const state = {
       mode: 'rowSelection',
@@ -524,24 +556,54 @@
     }
 
     function updateUI() {
-      inputTextDisplay.textContent = state.inputText || 'ここに入力内容が表示されます。';
+      const isModRow = state.selectedRow in MODIFIER_LABEL;
 
+      inputTextDisplay.textContent = state.inputText || 'ここに入力内容が表示されます。';
       rowCard.classList.toggle('mode-active',  state.mode === 'rowSelection');
-      kanaCard.classList.toggle('mode-active', state.mode === 'kanaSelection');
+      kanaCard.classList.toggle('mode-active', state.mode !== 'rowSelection');
 
       rowCells.forEach((cell) => {
-        cell.classList.toggle('active', cell.dataset.row === state.selectedRow);
+        cell.classList.toggle('active', state.mode === 'rowSelection' && cell.dataset.row === state.selectedRow);
       });
 
-      const kana = KANA_MAP[state.selectedRow];
-      Object.entries(kanaCells).forEach(([pos, cell]) => {
-        cell.textContent = kana[pos];
-        cell.classList.toggle('active', state.selectedKanaPos === pos);
-      });
-
-      statusText.textContent = state.mode === 'rowSelection'
-        ? `行選択: 「${state.selectedRow}」行`
-        : `段選択: 「${KANA_MAP[state.selectedRow][state.selectedKanaPos]}」`;
+      if (state.mode === 'modSelection') {
+        const lastChar = state.inputText.slice(-1);
+        const modOptions = {
+          center: lastChar,
+          left:   DAKUTEN_MAP[lastChar]    || '—',
+          up:     HANDAKUTEN_MAP[lastChar] || '—',
+          right:  KOGAKI_MAP[lastChar]     || '—',
+          down:   lastChar
+        };
+        Object.entries(kanaCells).forEach(([pos, cell]) => {
+          const val = modOptions[pos];
+          cell.textContent = val;
+          cell.classList.toggle('active', state.selectedKanaPos === pos);
+          cell.classList.toggle('empty',  val === '—');
+        });
+        const sel = modOptions[state.selectedKanaPos];
+        statusText.textContent = (state.selectedKanaPos === 'center' || state.selectedKanaPos === 'down' || sel === '—')
+          ? `変換なし: 「${lastChar}」のまま`
+          : `変換: 「${lastChar}」→「${sel}」`;
+      } else if (isModRow && state.mode === 'rowSelection') {
+        Object.entries(kanaCells).forEach(([pos, cell]) => {
+          const val = pos === 'center' ? MODIFIER_LABEL[state.selectedRow] : '—';
+          cell.textContent = val;
+          cell.classList.remove('active');
+          cell.classList.toggle('empty', val === '—');
+        });
+        statusText.textContent = `変換キー: 「${MODIFIER_LABEL[state.selectedRow]}」選択中`;
+      } else {
+        const kana = KANA_MAP[state.selectedRow] || KANA_MAP['な'];
+        Object.entries(kanaCells).forEach(([pos, cell]) => {
+          cell.textContent = kana[pos];
+          cell.classList.toggle('active', state.mode !== 'rowSelection' && state.selectedKanaPos === pos);
+          cell.classList.remove('empty');
+        });
+        statusText.textContent = state.mode === 'rowSelection'
+          ? `行選択: 「${state.selectedRow}」行`
+          : `段選択: 「${KANA_MAP[state.selectedRow][state.selectedKanaPos]}」`;
+      }
 
       buttonSizeSelect.value     = state.settings.buttonSize;
       textSizeSelect.value       = state.settings.textSize;
@@ -572,7 +634,6 @@
 
     function moveKana(dir) {
       state.selectedKanaPos = KANA_NAV[state.selectedKanaPos][dir] || state.selectedKanaPos;
-      state.mode = 'kanaSelection';
       updateUI();
     }
 
@@ -583,15 +644,37 @@
 
     function confirmSelection() {
       if (state.mode === 'rowSelection') {
-        state.mode = 'kanaSelection';
-        state.selectedKanaPos = 'center';
-      } else {
-        lastConfirmedRow = state.selectedRow; // キャンセル用に行を保存
+        const row = state.selectedRow;
+        if (row in MODIFIER_LABEL) {
+          if (state.inputText.length === 0) return;
+          state.mode = 'modSelection';
+          if (row === 'dakuten')    state.selectedKanaPos = 'left';
+          else if (row === 'handakuten') state.selectedKanaPos = 'up';
+          else                           state.selectedKanaPos = 'right';
+        } else {
+          state.mode = 'kanaSelection';
+          state.selectedKanaPos = 'center';
+        }
+      } else if (state.mode === 'kanaSelection') {
+        lastConfirmedRow = state.selectedRow;
         state.inputText += KANA_MAP[state.selectedRow][state.selectedKanaPos];
         state.mode = 'rowSelection';
         state.selectedRow = 'な';
         state.selectedKanaPos = 'center';
         saveData();
+      } else if (state.mode === 'modSelection') {
+        const lastChar = state.inputText.slice(-1);
+        let converted;
+        if (state.selectedKanaPos === 'left')  converted = DAKUTEN_MAP[lastChar];
+        else if (state.selectedKanaPos === 'up')    converted = HANDAKUTEN_MAP[lastChar];
+        else if (state.selectedKanaPos === 'right') converted = KOGAKI_MAP[lastChar];
+        if (converted) {
+          state.inputText = state.inputText.slice(0, -1) + converted;
+          saveData();
+        }
+        state.mode = 'rowSelection';
+        state.selectedRow = 'な';
+        state.selectedKanaPos = 'center';
       }
       updateUI();
     }
@@ -629,13 +712,11 @@
       updateUI();
     }
     function cancelAction() {
-      if (state.mode === 'kanaSelection') {
-        // 行選択確定後のキャンセル: 文字削除なしで行選択モードに戻る
+      if (state.mode === 'modSelection' || state.mode === 'kanaSelection') {
         state.mode = 'rowSelection';
         state.selectedRow = 'な';
         state.selectedKanaPos = 'center';
       } else {
-        // 段選択確定後のキャンセル: 直前の文字を削除し、同じ行の段選択に戻る
         if (state.inputText.length === 0) return;
         state.inputText = state.inputText.slice(0, -1);
         state.mode = 'kanaSelection';
