@@ -479,12 +479,7 @@
       settings: { buttonSize: 'standard', textSize: 'standard', highlightColor: '#2563eb' }
     };
 
-    const inputHistory = []; // アンドゥ用履歴（最大50件）
-
-    function pushHistory() {
-      inputHistory.push(state.inputText);
-      if (inputHistory.length > 50) inputHistory.shift();
-    }
+    let lastConfirmedRow = 'な'; // キャンセル用：直前に確定した行を保持
 
     const container          = document.querySelector('.container');
     const rowCard            = document.getElementById('rowCard');
@@ -591,7 +586,7 @@
         state.mode = 'kanaSelection';
         state.selectedKanaPos = 'center';
       } else {
-        pushHistory();
+        lastConfirmedRow = state.selectedRow; // キャンセル用に行を保存
         state.inputText += KANA_MAP[state.selectedRow][state.selectedKanaPos];
         state.mode = 'rowSelection';
         state.selectedRow = 'な';
@@ -616,13 +611,11 @@
     }
 
     function deleteChar() {
-      pushHistory();
       state.inputText = state.inputText.slice(0, -1);
       saveData();
       updateUI();
     }
     function clearText() {
-      pushHistory();
       state.inputText = '';
       state.selectedRow = 'な';
       state.selectedKanaPos = 'center';
@@ -631,18 +624,25 @@
       updateUI();
     }
     function insertSpace() {
-      pushHistory();
       state.inputText += ' ';
       saveData();
       updateUI();
     }
-    function undoAction() {
-      if (inputHistory.length === 0) return;
-      state.inputText = inputHistory.pop();
-      state.selectedRow = 'な';
-      state.selectedKanaPos = 'center';
-      state.mode = 'rowSelection';
-      saveData();
+    function cancelAction() {
+      if (state.mode === 'kanaSelection') {
+        // 行選択確定後のキャンセル: 文字削除なしで行選択モードに戻る
+        state.mode = 'rowSelection';
+        state.selectedRow = 'な';
+        state.selectedKanaPos = 'center';
+      } else {
+        // 段選択確定後のキャンセル: 直前の文字を削除し、同じ行の段選択に戻る
+        if (state.inputText.length === 0) return;
+        state.inputText = state.inputText.slice(0, -1);
+        state.mode = 'kanaSelection';
+        state.selectedRow = lastConfirmedRow;
+        state.selectedKanaPos = 'center';
+        saveData();
+      }
       updateUI();
     }
     function toggleSettings() { settingsOverlay.classList.toggle('open'); }
@@ -655,7 +655,7 @@
     confirmButton.addEventListener('click', confirmSelection);
     readButton.addEventListener('click', readAloud);
     deleteButton.addEventListener('click', deleteChar);
-    undoButton.addEventListener('click', undoAction);
+    undoButton.addEventListener('click', cancelAction);
     clearButton.addEventListener('click', clearText);
     spaceButton.addEventListener('click', insertSpace);
     settingsToggleButton.addEventListener('click', toggleSettings);
