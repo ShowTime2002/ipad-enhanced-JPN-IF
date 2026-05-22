@@ -185,6 +185,8 @@
     .row-cell.mod-key {
       background: #fef3c7;
       color: #92400e;
+      font-size: 0.72rem;
+      letter-spacing: -0.02em;
     }
     .row-cell.mod-key.active {
       background: rgba(217, 119, 6, 0.2);
@@ -361,11 +363,8 @@
           <button class="row-cell" data-row="ま">ま</button>
           <button class="row-cell" data-row="や">や</button>
           <button class="row-cell" data-row="ら">ら</button>
-          <button class="row-cell mod-key" data-row="dakuten">゛</button>
+          <button class="row-cell mod-key" data-row="mod">゛゜小</button>
           <button class="row-cell" data-row="わ">わ</button>
-          <button class="row-cell mod-key" data-row="handakuten">゜</button>
-          <button class="row-cell mod-key" data-row="kogaki">小</button>
-          <div   class="row-cell empty"></div>
           <div   class="row-cell empty"></div>
         </div>
       </div>
@@ -451,19 +450,17 @@
     const STORAGE_SETTINGS = 'jp-access-settings';
 
     const ROW_NAV = {
-      'あ':        {NW:'あ',N:'あ',NE:'か',W:'あ',E:'か',SW:'た',S:'た',SE:'な'},
-      'か':        {NW:'あ',N:'か',NE:'さ',W:'あ',E:'さ',SW:'な',S:'な',SE:'は'},
-      'さ':        {NW:'か',N:'さ',NE:'さ',W:'か',E:'さ',SW:'は',S:'は',SE:'は'},
-      'た':        {NW:'あ',N:'あ',NE:'な',W:'た',E:'な',SW:'ま',S:'ま',SE:'や'},
-      'な':        {NW:'あ',N:'か',NE:'さ',W:'た',E:'は',SW:'ま',S:'や',SE:'ら'},
-      'は':        {NW:'か',N:'さ',NE:'さ',W:'な',E:'は',SW:'や',S:'ら',SE:'ら'},
-      'ま':        {NW:'た',N:'た',NE:'や',W:'ま',E:'や',SW:'dakuten',S:'dakuten',SE:'わ'},
-      'や':        {NW:'な',N:'な',NE:'は',W:'ま',E:'ら',SW:'dakuten',S:'わ',SE:'handakuten'},
-      'ら':        {NW:'な',N:'は',NE:'は',W:'や',E:'ら',SW:'わ',S:'handakuten',SE:'handakuten'},
-      'わ':        {NW:'ま',N:'や',NE:'ら',W:'dakuten',E:'handakuten',SW:'kogaki',S:'わ',SE:'handakuten'},
-      'dakuten':   {NW:'ま',N:'ま',NE:'や',W:'dakuten',E:'わ',SW:'kogaki',S:'kogaki',SE:'わ'},
-      'handakuten':{NW:'や',N:'ら',NE:'ら',W:'わ',E:'handakuten',SW:'kogaki',S:'handakuten',SE:'handakuten'},
-      'kogaki':    {NW:'dakuten',N:'dakuten',NE:'わ',W:'kogaki',E:'kogaki',SW:'kogaki',S:'kogaki',SE:'kogaki'}
+      'あ':  {NW:'あ',N:'あ',NE:'か',W:'あ',E:'か',SW:'た',S:'た',SE:'な'},
+      'か':  {NW:'あ',N:'か',NE:'さ',W:'あ',E:'さ',SW:'な',S:'な',SE:'は'},
+      'さ':  {NW:'か',N:'さ',NE:'さ',W:'か',E:'さ',SW:'は',S:'は',SE:'は'},
+      'た':  {NW:'あ',N:'あ',NE:'な',W:'た',E:'な',SW:'ま',S:'ま',SE:'や'},
+      'な':  {NW:'あ',N:'か',NE:'さ',W:'た',E:'は',SW:'ま',S:'や',SE:'ら'},
+      'は':  {NW:'か',N:'さ',NE:'さ',W:'な',E:'は',SW:'や',S:'ら',SE:'ら'},
+      'ま':  {NW:'た',N:'た',NE:'や',W:'ま',E:'や',SW:'mod',S:'mod',SE:'わ'},
+      'や':  {NW:'な',N:'な',NE:'は',W:'ま',E:'ら',SW:'mod',S:'わ',SE:'ら'},
+      'ら':  {NW:'な',N:'は',NE:'は',W:'や',E:'ら',SW:'わ',S:'わ',SE:'わ'},
+      'わ':  {NW:'ま',N:'や',NE:'ら',W:'mod',E:'わ',SW:'mod',S:'わ',SE:'わ'},
+      'mod': {NW:'ま',N:'ま',NE:'や',W:'mod',E:'わ',SW:'mod',S:'mod',SE:'わ'}
     };
 
     const KANA_MAP = {
@@ -501,7 +498,7 @@
       'あ':'ぁ','い':'ぃ','う':'ぅ','え':'ぇ','お':'ぉ',
       'つ':'っ','や':'ゃ','ゆ':'ゅ','よ':'ょ','わ':'ゎ'
     };
-    const MODIFIER_LABEL = {dakuten:'゛', handakuten:'゜', kogaki:'小'};
+    const MODIFIER_LABEL = {mod:'゛゜小'};
 
     const state = {
       mode: 'rowSelection',
@@ -586,13 +583,21 @@
           ? `変換なし: 「${lastChar}」のまま`
           : `変換: 「${lastChar}」→「${sel}」`;
       } else if (isModRow && state.mode === 'rowSelection') {
+        const lastChar = state.inputText.slice(-1);
+        const preview = {
+          left:   lastChar ? (DAKUTEN_MAP[lastChar]    || '—') : '゛',
+          up:     lastChar ? (HANDAKUTEN_MAP[lastChar] || '—') : '゜',
+          right:  lastChar ? (KOGAKI_MAP[lastChar]     || '—') : '小',
+          center: lastChar || '—',
+          down:   '—'
+        };
         Object.entries(kanaCells).forEach(([pos, cell]) => {
-          const val = pos === 'center' ? MODIFIER_LABEL[state.selectedRow] : '—';
+          const val = preview[pos];
           cell.textContent = val;
           cell.classList.remove('active');
           cell.classList.toggle('empty', val === '—');
         });
-        statusText.textContent = `変換キー: 「${MODIFIER_LABEL[state.selectedRow]}」選択中`;
+        statusText.textContent = '変換キー選択中: 確定で変換へ';
       } else {
         const kana = KANA_MAP[state.selectedRow] || KANA_MAP['な'];
         Object.entries(kanaCells).forEach(([pos, cell]) => {
@@ -645,12 +650,10 @@
     function confirmSelection() {
       if (state.mode === 'rowSelection') {
         const row = state.selectedRow;
-        if (row in MODIFIER_LABEL) {
+        if (row === 'mod') {
           if (state.inputText.length === 0) return;
           state.mode = 'modSelection';
-          if (row === 'dakuten')    state.selectedKanaPos = 'left';
-          else if (row === 'handakuten') state.selectedKanaPos = 'up';
-          else                           state.selectedKanaPos = 'right';
+          state.selectedKanaPos = 'center';
         } else {
           state.mode = 'kanaSelection';
           state.selectedKanaPos = 'center';
