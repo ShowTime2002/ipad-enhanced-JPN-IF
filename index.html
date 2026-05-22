@@ -683,7 +683,33 @@
     }
 
     function setRowSelection(row)  { state.selectedRow = row;  state.mode = 'rowSelection';  updateUI(); }
-    function setKanaSelection(pos) { state.selectedKanaPos = pos; state.mode = 'kanaSelection'; updateUI(); }
+
+    function handleKanaClick(pos) {
+      if (state.mode === 'modSelection' || state.selectedRow === 'mod') {
+        if (state.inputText.length === 0) return;
+        const lastChar = state.inputText.slice(-1);
+        let converted;
+        if (pos === 'left')       converted = DAKUTEN_MAP[lastChar];
+        else if (pos === 'up')    converted = HANDAKUTEN_MAP[lastChar];
+        else if (pos === 'right') converted = KOGAKI_MAP[lastChar];
+        if (converted) {
+          state.inputText = state.inputText.slice(0, -1) + converted;
+          saveData();
+        }
+      } else {
+        const kana = KANA_MAP[state.selectedRow];
+        if (!kana) return;
+        const char = kana[pos];
+        if (!char || char === 'ー') return;
+        lastConfirmedRow = state.selectedRow;
+        state.inputText += char;
+        saveData();
+      }
+      state.mode = 'rowSelection';
+      state.selectedRow = 'な';
+      state.selectedKanaPos = 'center';
+      updateUI();
+    }
 
     function readAloud() {
       const text = state.inputText.trim();
@@ -733,7 +759,7 @@
 
     rowCells.forEach((cell) => cell.addEventListener('click', () => setRowSelection(cell.dataset.row)));
     Object.entries(kanaCells).forEach(([pos, cell]) => {
-      cell.addEventListener('click', () => setKanaSelection(pos));
+      cell.addEventListener('click', () => handleKanaClick(pos));
     });
     directionButtons.forEach((btn) => btn.addEventListener('click', () => handleDirection(btn.dataset.dir)));
     confirmButton.addEventListener('click', confirmSelection);
