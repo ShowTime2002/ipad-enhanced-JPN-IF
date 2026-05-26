@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, minimum-scale=1, maximum-scale=1" />
   <title>日本語入力支援アプリ</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon.svg" />
@@ -34,8 +34,7 @@
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
-      /* ダブルタップズームを無効化（シングルタップのみ有効） */
-      touch-action: manipulation;
+      touch-action: none;
     }
 
     /* 入力表示欄はコピー可能にする */
@@ -44,6 +43,7 @@
     html, body {
       height: 100%;
       overflow: hidden;
+      overscroll-behavior: none;
       width: 100%;
       background: var(--bg);
       color: var(--text);
@@ -796,25 +796,35 @@
       if (!e.target.closest('.display-text')) e.preventDefault();
     });
 
+    /* 拡大縮小・パンニング・スワイプを無効化 */
+    /* iOS SafariはViewportのuser-scalable=noを無視するためJSでも制御する */
+    function onTouchMove(e)      { e.preventDefault(); }
+    function onTouchStartMulti(e){ if (e.touches.length > 1) e.preventDefault(); }
+    function onGesture(e)        { e.preventDefault(); }
+    document.addEventListener('touchmove',     onTouchMove,       { passive: false });
+    document.addEventListener('touchstart',    onTouchStartMulti, { passive: false });
+    document.addEventListener('gesturestart',  onGesture,         { passive: false });
+    document.addEventListener('gesturechange', onGesture,         { passive: false });
+
     /* ダブルタップ・ダブルクリックをシングル操作に読み替え */
     let lastTouchEnd = 0;
     function onTouchEnd(e) {
       const now = Date.now();
-      if (now - lastTouchEnd < 350) {
-        e.preventDefault(); // ダブルタップズームを阻止してシングル扱い
-      }
+      if (now - lastTouchEnd < 350) e.preventDefault();
       lastTouchEnd = now;
     }
-    function onDblClick(e) {
-      e.preventDefault(); // マウスのダブルクリックも阻止
-    }
+    function onDblClick(e) { e.preventDefault(); }
     document.addEventListener('touchend', onTouchEnd, { passive: false });
     document.addEventListener('dblclick', onDblClick);
 
     /* アプリ終了時にイベントリスナーを解除して元の状態に戻す */
     window.addEventListener('beforeunload', () => {
-      document.removeEventListener('touchend', onTouchEnd);
-      document.removeEventListener('dblclick', onDblClick);
+      document.removeEventListener('touchmove',     onTouchMove);
+      document.removeEventListener('touchstart',    onTouchStartMulti);
+      document.removeEventListener('gesturestart',  onGesture);
+      document.removeEventListener('gesturechange', onGesture);
+      document.removeEventListener('touchend',      onTouchEnd);
+      document.removeEventListener('dblclick',      onDblClick);
     });
 
     restoreData();
