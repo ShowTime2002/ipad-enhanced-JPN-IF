@@ -63,7 +63,7 @@
       height: 100%;
       display: grid;
       grid-template-rows: auto auto 1fr;
-      gap: 6px;
+      gap: clamp(3px, 0.85svh, 6px);
       max-width: 960px;
       margin: 0 auto;
       overflow: hidden;
@@ -74,9 +74,9 @@
       background: var(--surface);
       border-radius: var(--card-radius);
       box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-      padding: 8px 10px;
+      padding: clamp(5px, 1.1svh, 8px) 10px;
       display: grid;
-      gap: 6px;
+      gap: clamp(3px, 0.85svh, 6px);
     }
 
     .section-title {
@@ -96,7 +96,7 @@
       background: #f8fbff;
       border-radius: 10px;
       padding: 6px 10px;
-      min-height: 46px;
+      min-height: clamp(36px, 6.5svh, 46px);
     }
 
     .status-row {
@@ -134,19 +134,19 @@
     .selection-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px;
+      gap: clamp(3px, 0.85svh, 6px);
     }
 
     .row-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
+      gap: clamp(3px, 0.7svh, 5px);
     }
 
     .kana-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
+      gap: clamp(3px, 0.7svh, 5px);
     }
 
     .row-cell,
@@ -205,7 +205,7 @@
     .pad-card {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: clamp(3px, 0.85svh, 6px);
       overflow: hidden;
     }
 
@@ -213,8 +213,8 @@
       flex: 1;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      gap: 24px;
+      grid-template-rows: repeat(3, minmax(0, 1fr));
+      gap: clamp(8px, 2.5svh, 24px);
       min-height: 0;
     }
 
@@ -620,9 +620,14 @@
       const root = document.documentElement;
       root.style.setProperty('--primary', state.settings.highlightColor);
 
+      const svh = window.innerHeight * 0.01;
       const bs = state.settings.buttonSize;
-      root.style.setProperty('--row-cell-h', bs === 'xlarge' ? '58px' : bs === 'large' ? '52px' : '44px');
-      root.style.setProperty('--action-h',   bs === 'xlarge' ? '58px' : bs === 'large' ? '54px' : '50px');
+      const maxCellH   = bs === 'xlarge' ? 58 : bs === 'large' ? 52 : 44;
+      const maxActionH = bs === 'xlarge' ? 58 : bs === 'large' ? 54 : 50;
+      const cellScale   = bs === 'xlarge' ? 7.5 : bs === 'large' ? 6.3 : 5.3;
+      const actionScale = bs === 'xlarge' ? 7.5 : bs === 'large' ? 7.0 : 6.5;
+      root.style.setProperty('--row-cell-h', Math.min(maxCellH, cellScale * svh).toFixed(1) + 'px');
+      root.style.setProperty('--action-h',   Math.min(maxActionH, actionScale * svh).toFixed(1) + 'px');
 
       const ts = state.settings.textSize;
       root.style.setProperty('--display-fs',   ts === 'xlarge' ? '38px'   : ts === 'large' ? '32px'   : '26px');
@@ -812,6 +817,8 @@
       document.removeEventListener('touchend',      onTouchEnd);
       document.removeEventListener('dblclick',      onDblClick);
     });
+
+    window.addEventListener('resize', applyStyles);
 
     restoreData();
     updateUI();
