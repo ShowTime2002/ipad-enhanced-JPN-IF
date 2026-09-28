@@ -712,6 +712,8 @@
       if (storedSettings) {
         try { Object.assign(state.settings, JSON.parse(storedSettings)); }
         catch (e) { console.warn('設定の復元に失敗', e); }
+        // スキャン間隔の上限を4秒から3秒に下げたため、以前の保存値を収める
+        state.settings.scanInterval = Math.min(state.settings.scanInterval, 3);
       }
     }
 
@@ -985,7 +987,7 @@
       select.replaceChildren(...values.map((v) => new Option(format(v), String(v))));
     }
     const formatSec = (v) => v.toFixed(1) + '秒';
-    fillOptions(SCAN_SETTING_SELECTS[0][0], [1, 1.5, 2, 2.5, 3, 3.5, 4], formatSec);
+    fillOptions(SCAN_SETTING_SELECTS[0][0], [0.5, 1, 1.5, 2, 2.5, 3], formatSec);
     fillOptions(SCAN_SETTING_SELECTS[1][0], [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5], formatSec);
     fillOptions(SCAN_SETTING_SELECTS[2][0], [0.3, 0.5, 0.7, 1], formatSec);
     fillOptions(SCAN_SETTING_SELECTS[3][0], [2, 3, 4, 5, 0], (v) => (v ? v + '周' : 'しない'));
