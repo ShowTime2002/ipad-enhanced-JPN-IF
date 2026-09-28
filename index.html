@@ -324,8 +324,12 @@
       font-size: max(calc(var(--kana-cell-fs) * 1.3), 6svh);
       min-height: calc(var(--row-cell-h) * 1.5);
     }
-    .scan-cell.small,
-    .scan-kana-grid .scan-cell.small { font-size: min(max(var(--row-cell-fs), 2.6svh), 3.8vw); }
+    .scan-cell.small { font-size: min(max(var(--row-cell-fs), 2.6svh), 3.8vw); }
+    /* 段パネルの機能名など: 5列でも「クリア」が1行に収まる大きさ。改行はラベル内の指定位置でだけ行う */
+    .scan-kana-grid .scan-cell.small {
+      font-size: min(5svh, calc((100vw - 52px) / 17));
+      word-break: keep-all;
+    }
     .scan-cell.back    { background: #e2e8f0; color: var(--muted); }
     .scan-cell.preview { opacity: 0.5; }
 
@@ -574,6 +578,13 @@
           無操作で停止
           <select id="idleCyclesSelect"></select>
         </label>
+        <label class="scan-only">
+          パネルのタッチ
+          <select id="panelTouchSelect">
+            <option value="on">有効</option>
+            <option value="off">無効</option>
+          </select>
+        </label>
       </div>
       <button id="closeSettingsButton" class="close-btn">閉じる</button>
     </div>
@@ -643,7 +654,7 @@
       inputText: '',
       settings: {
         inputMode: 'dpad', buttonSize: 'standard', textSize: 'standard', highlightColor: '#2563eb',
-        scanInterval: 2, confirmWait: 2, debounce: 0.5, idleCycles: 3
+        scanInterval: 2, confirmWait: 2, debounce: 0.5, idleCycles: 3, panelTouch: 'on'
       }
     };
 
@@ -676,6 +687,7 @@
     const textSizeSelect       = document.getElementById('textSizeSelect');
     const highlightColorSelect = document.getElementById('highlightColorSelect');
     const inputModeSelect      = document.getElementById('inputModeSelect');
+    const panelTouchSelect     = document.getElementById('panelTouchSelect');
     const scanRowCard          = document.getElementById('scanRowCard');
     const scanKanaCard         = document.getElementById('scanKanaCard');
     const scanRowGrid          = document.getElementById('scanRowGrid');
@@ -715,6 +727,7 @@
       textSizeSelect.value       = state.settings.textSize;
       highlightColorSelect.value = state.settings.highlightColor;
       SCAN_SETTING_SELECTS.forEach(([select, key]) => { select.value = String(state.settings[key]); });
+      panelTouchSelect.value     = state.settings.panelTouch;
       applyStyles();
     }
 
@@ -998,7 +1011,7 @@
     function scanItemsFor(key) {
       if (key === 'func') {
         return [
-          { label: '読み上げ', speak: '読み上げ', run: readAloud },
+          { label: '読み​上げ', speak: '読み上げ', run: readAloud }, // 2行に分けるときは「読み／上げ」で改行
           { label: '削除',     speak: '削除',     run: deleteChar },
           { label: '空白',     speak: '空白',     run: insertSpace },
           { label: 'クリア',   speak: 'クリア',   run: clearText }
@@ -1084,30 +1097,45 @@
       });
     }
 
+    function acceptPress() {
+      const now = Date.now();
+      if (now - scan.lastPress < state.settings.debounce * 1000) return false; // 震えによる2度押しを無視
+      scan.lastPress = now;
+      return true;
+    }
+
+    // 行を選ぶ。パネルを直接タッチしたとき（direct）は音声確認を省いて段スキャンへ進む
+    function scanSelectRow(index, direct) {
+      const row = SCAN_ROWS[index];
+      if (row.key === 'mod' && modCandidates().length === 0) {
+        speak('変換できる文字がありません');
+        return;
+      }
+      if (direct) scanOpenRow(index);
+      else scanConfirm('rowConfirm', row.speak);
+    }
+
+    function scanOpenRow(index) {
+      scan.rowIndex = index;
+      scan.items = [...scanItemsFor(SCAN_ROWS[index].key), SCAN_BACK];
+      scanRun('kana', 0);
+    }
+
     function scanPress() {
       const confirming = scan.phase.endsWith('Confirm');
       if (confirming && !scan.ready) return; // 確認の音声中は受け付けない
-      const now = Date.now();
-      if (now - scan.lastPress < state.settings.debounce * 1000) return; // 震えによる2度押しを無視
-      scan.lastPress = now;
+      if (!acceptPress()) return;
       scanConfirmButton.classList.add('pressed');
       setTimeout(() => scanConfirmButton.classList.remove('pressed'), 150);
 
       if (scan.phase === 'idle') {
         scanRun('row', 0);
       } else if (scan.phase === 'row') {
-        const row = SCAN_ROWS[scan.index];
-        if (row.key === 'mod' && modCandidates().length === 0) {
-          speak('変換できる文字がありません');
-          return;
-        }
-        scanConfirm('rowConfirm', row.speak);
+        scanSelectRow(scan.index, false);
       } else if (scan.phase === 'kana') {
         scanConfirm('kanaConfirm', scan.items[scan.index].speak);
       } else if (scan.phase === 'rowConfirm') {
-        scan.rowIndex = scan.index;
-        scan.items = [...scanItemsFor(SCAN_ROWS[scan.index].key), SCAN_BACK];
-        scanRun('kana', 0);
+        scanOpenRow(scan.index);
       } else {
         const item = scan.items[scan.index];
         if (item === SCAN_BACK) {
@@ -1191,8 +1219,25 @@
       select.addEventListener('change', (e) => { state.settings[key] = Number(e.target.value); saveData(); });
     });
 
+    panelTouchSelect.addEventListener('change', (e) => { state.settings.panelTouch = e.target.value; saveData(); });
+
     /* スキャンの確定は指が触れた瞬間に反応させる（click は指が動くと発火しないことがある） */
     scanConfirmButton.addEventListener('pointerdown', (e) => { e.preventDefault(); scanPress(); });
+
+    /* 介助者向け: スキャン中もパネルを直接タッチして選べる（設定で無効にできる）。
+       行はすぐに段スキャンへ進む。段は誤タッチでも被害が出ないよう、音声確認を経て確定ボタンで決める */
+    scanRowCells.forEach((cell, i) => cell.addEventListener('click', () => {
+      if (state.settings.panelTouch !== 'on' || !acceptPress()) return;
+      scanSelectRow(i, true);
+    }));
+    scanKanaGrid.addEventListener('click', (e) => {
+      const cell = e.target.closest('.scan-cell');
+      if (!cell || state.settings.panelTouch !== 'on') return;
+      if (scan.phase !== 'kana' && scan.phase !== 'kanaConfirm') return;
+      if (!acceptPress()) return;
+      scan.index = [...scanKanaGrid.children].indexOf(cell);
+      scanConfirm('kanaConfirm', scan.items[scan.index].speak);
+    });
 
     /* 外部スイッチ（キーボードとして Space / Enter を送るもの）でも確定できる */
     document.addEventListener('keydown', (e) => {

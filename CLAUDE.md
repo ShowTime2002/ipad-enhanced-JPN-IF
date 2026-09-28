@@ -25,7 +25,8 @@
 - 状態は `scan`（`phase`: `idle` / `row` / `rowConfirm` / `kana` / `kanaConfirm`）に集約する。遷移は `scanRun()` / `scanConfirm()` / `scanIdle()` を通し、直接 `phase` を書き換えない
 - タイマーは `scan.timer` の1本だけ使う。遷移時は `scanStop()` で止める。音声のコールバックは `scan.gen` で古いものを無視する
 - 候補は `SCAN_ROWS`（行）と `scanItemsFor()`（段）で定義する。段の候補を足すときは、確認音声で読みにくい文字の読み方を `SPEAK_NAME` に追加する
-- 確定は `pointerdown` と keydown（Space / Enter）で受ける。click にしない（震えで指が動くと iOS では click が発火しないことがある）
+- 確定ボタンは `pointerdown` と keydown（Space / Enter）で受ける。click にしない（震えで指が動くと iOS では click が発火しないことがある）
+- 介助者向けのパネル直接タッチは逆に click で受ける（指が動いた誤タッチを拾わないため）。段パネルのタッチは必ず音声確認を経由させ、即入力にしない
 - 保存先は localStorage（`jp-access-input-text`, `jp-access-settings`）。設定項目を追加するときは `state.settings` の初期値にも追加する（保存済みの値は `Object.assign` でマージされる）
 - ボタンの高さは `applyStyles()` で画面の高さから算出する（CSS 変数 `--row-cell-h`, `--action-h`）
 
