@@ -19,6 +19,7 @@
 - 状態は `state`（`mode` / `selectedRow` / `selectedKanaPos` / `inputText` / `settings`）に集約し、変更後に `updateUI()` で再描画する
 - `mode` の遷移: `rowSelection` →（確定）→ `kanaSelection`（通常の行）または `modSelection`（゛゜小）→（確定）→ `rowSelection`
 - 行・段の移動は `ROW_NAV` / `KANA_NAV`、文字は `KANA_MAP`、変換は `DAKUTEN_MAP` / `HANDAKUTEN_MAP` / `KOGAKI_MAP` で定義する
+- 段パネルの文字のない位置は `NONE`（「ｘ」）で表す。確定・タッチしても入力されない。長音「ー」は通常の文字として扱う
 
 ### スキャン入力（仕様: docs/scan-input-spec.md）
 

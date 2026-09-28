@@ -609,6 +609,8 @@
       'sym': {NW:'や',N:'ら',NE:'ら',W:'わ',E:'sym',SW:'わ',S:'sym',SE:'sym'}
     };
 
+    const NONE = 'ｘ'; // 方向キー入力で「該当なし」を示す印（入力されない）
+
     const KANA_MAP = {
       'あ': {center:'あ',left:'い',up:'う',right:'え',down:'お'},
       'か': {center:'か',left:'き',up:'く',right:'け',down:'こ'},
@@ -617,10 +619,10 @@
       'な': {center:'な',left:'に',up:'ぬ',right:'ね',down:'の'},
       'は': {center:'は',left:'ひ',up:'ふ',right:'へ',down:'ほ'},
       'ま': {center:'ま',left:'み',up:'む',right:'め',down:'も'},
-      'や': {center:'や',left:'ー',up:'ゆ',right:'ー',down:'よ'},
+      'や': {center:'や',left:NONE,up:'ゆ',right:NONE,down:'よ'},
       'ら': {center:'ら',left:'り',up:'る',right:'れ',down:'ろ'},
-      'わ': {center:'わ',left:'を',up:'ん',right:'ー',down:'ー'},
-      'sym': {center:'、',left:'。',up:'？',right:'ー',down:'ー'}
+      'わ': {center:'わ',left:'を',up:'ん',right:'ー',down:NONE},
+      'sym': {center:'、',left:'。',up:'？',right:NONE,down:NONE}
     };
 
     const KANA_NAV = {
@@ -747,35 +749,35 @@
         const lastChar = state.inputText.slice(-1);
         const modOptions = {
           center: lastChar,
-          left:   DAKUTEN_MAP[lastChar]    || '—',
-          up:     HANDAKUTEN_MAP[lastChar] || '—',
-          right:  KOGAKI_MAP[lastChar]     || '—',
+          left:   DAKUTEN_MAP[lastChar]    || NONE,
+          up:     HANDAKUTEN_MAP[lastChar] || NONE,
+          right:  KOGAKI_MAP[lastChar]     || NONE,
           down:   lastChar
         };
         Object.entries(kanaCells).forEach(([pos, cell]) => {
           const val = modOptions[pos];
           cell.textContent = val;
           cell.classList.toggle('active', state.selectedKanaPos === pos);
-          cell.classList.toggle('empty',  val === '—');
+          cell.classList.toggle('empty',  val === NONE);
         });
         const sel = modOptions[state.selectedKanaPos];
-        statusText.textContent = (state.selectedKanaPos === 'center' || state.selectedKanaPos === 'down' || sel === '—')
+        statusText.textContent = (state.selectedKanaPos === 'center' || state.selectedKanaPos === 'down' || sel === NONE)
           ? `変換なし: 「${lastChar}」のまま`
           : `変換: 「${lastChar}」→「${sel}」`;
       } else if (isModRow && state.mode === 'rowSelection') {
         const lastChar = state.inputText.slice(-1);
         const preview = {
-          left:   lastChar ? (DAKUTEN_MAP[lastChar]    || '—') : '゛',
-          up:     lastChar ? (HANDAKUTEN_MAP[lastChar] || '—') : '゜',
-          right:  lastChar ? (KOGAKI_MAP[lastChar]     || '—') : '小',
-          center: lastChar || '—',
-          down:   '—'
+          left:   lastChar ? (DAKUTEN_MAP[lastChar]    || NONE) : '゛',
+          up:     lastChar ? (HANDAKUTEN_MAP[lastChar] || NONE) : '゜',
+          right:  lastChar ? (KOGAKI_MAP[lastChar]     || NONE) : '小',
+          center: lastChar || NONE,
+          down:   NONE
         };
         Object.entries(kanaCells).forEach(([pos, cell]) => {
           const val = preview[pos];
           cell.textContent = val;
           cell.classList.remove('active');
-          cell.classList.toggle('empty', val === '—');
+          cell.classList.toggle('empty', val === NONE);
         });
         statusText.textContent = '変換キー選択中: 確定で変換へ';
       } else {
@@ -783,7 +785,7 @@
         Object.entries(kanaCells).forEach(([pos, cell]) => {
           cell.textContent = kana[pos];
           cell.classList.toggle('active', state.mode !== 'rowSelection' && state.selectedKanaPos === pos);
-          cell.classList.remove('empty');
+          cell.classList.toggle('empty', kana[pos] === NONE);
         });
         statusText.textContent = state.mode === 'rowSelection'
           ? (state.selectedRow === 'sym' ? '行選択: 「記号」' : `行選択: 「${state.selectedRow}」行`)
@@ -839,6 +841,7 @@
           state.selectedKanaPos = 'center';
         }
       } else if (state.mode === 'kanaSelection') {
+        if (KANA_MAP[state.selectedRow][state.selectedKanaPos] === NONE) return;
         lastConfirmedRow = state.selectedRow;
         state.inputText += KANA_MAP[state.selectedRow][state.selectedKanaPos];
         state.mode = 'rowSelection';
@@ -880,7 +883,7 @@
         const kana = KANA_MAP[state.selectedRow];
         if (!kana) return;
         const char = kana[pos];
-        if (!char || char === 'ー') return;
+        if (!char || char === NONE) return;
         lastConfirmedRow = state.selectedRow;
         state.inputText += char;
         saveData();
