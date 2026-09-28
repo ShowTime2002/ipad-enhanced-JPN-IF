@@ -463,7 +463,7 @@
           <button class="row-cell" data-row="ら">ら</button>
           <button class="row-cell mod-key" data-row="mod">゛゜小</button>
           <button class="row-cell" data-row="わ">わ</button>
-          <div   class="row-cell empty"></div>
+          <button class="row-cell" data-row="sym">記号</button>
         </div>
       </div>
 
@@ -591,10 +591,11 @@
       'な':  {NW:'あ',N:'か',NE:'さ',W:'た',E:'は',SW:'ま',S:'や',SE:'ら'},
       'は':  {NW:'か',N:'さ',NE:'さ',W:'な',E:'は',SW:'や',S:'ら',SE:'ら'},
       'ま':  {NW:'た',N:'た',NE:'や',W:'ま',E:'や',SW:'mod',S:'mod',SE:'わ'},
-      'や':  {NW:'な',N:'な',NE:'は',W:'ま',E:'ら',SW:'mod',S:'わ',SE:'ら'},
-      'ら':  {NW:'な',N:'は',NE:'は',W:'や',E:'ら',SW:'わ',S:'わ',SE:'わ'},
-      'わ':  {NW:'ま',N:'や',NE:'ら',W:'mod',E:'わ',SW:'mod',S:'わ',SE:'わ'},
-      'mod': {NW:'ま',N:'ま',NE:'や',W:'mod',E:'わ',SW:'mod',S:'mod',SE:'わ'}
+      'や':  {NW:'な',N:'な',NE:'は',W:'ま',E:'ら',SW:'mod',S:'わ',SE:'sym'},
+      'ら':  {NW:'な',N:'は',NE:'は',W:'や',E:'ら',SW:'わ',S:'sym',SE:'sym'},
+      'わ':  {NW:'ま',N:'や',NE:'ら',W:'mod',E:'sym',SW:'mod',S:'わ',SE:'sym'},
+      'mod': {NW:'ま',N:'ま',NE:'や',W:'mod',E:'わ',SW:'mod',S:'mod',SE:'わ'},
+      'sym': {NW:'や',N:'ら',NE:'ら',W:'わ',E:'sym',SW:'わ',S:'sym',SE:'sym'}
     };
 
     const KANA_MAP = {
@@ -607,7 +608,8 @@
       'ま': {center:'ま',left:'み',up:'む',right:'め',down:'も'},
       'や': {center:'や',left:'ー',up:'ゆ',right:'ー',down:'よ'},
       'ら': {center:'ら',left:'り',up:'る',right:'れ',down:'ろ'},
-      'わ': {center:'わ',left:'を',up:'ん',right:'ー',down:'ー'}
+      'わ': {center:'わ',left:'を',up:'ん',right:'ー',down:'ー'},
+      'sym': {center:'、',left:'。',up:'？',right:'ー',down:'ー'}
     };
 
     const KANA_NAV = {
@@ -769,7 +771,7 @@
           cell.classList.remove('empty');
         });
         statusText.textContent = state.mode === 'rowSelection'
-          ? `行選択: 「${state.selectedRow}」行`
+          ? (state.selectedRow === 'sym' ? '行選択: 「記号」' : `行選択: 「${state.selectedRow}」行`)
           : `段選択: 「${KANA_MAP[state.selectedRow][state.selectedKanaPos]}」`;
       }
     }
