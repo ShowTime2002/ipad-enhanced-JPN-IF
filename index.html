@@ -714,8 +714,6 @@
       if (storedSettings) {
         try { Object.assign(state.settings, JSON.parse(storedSettings)); }
         catch (e) { console.warn('設定の復元に失敗', e); }
-        // スキャン間隔の上限を4秒から3秒に下げたため、以前の保存値を収める
-        state.settings.scanInterval = Math.min(state.settings.scanInterval, 3);
       }
     }
 
@@ -963,6 +961,7 @@
     const SPEAK_NAME  = { 'ー': 'のばし棒', '、': '読点', '。': '句点', '？': 'はてな', 'ゔ': 'ヴ' };
     const KOGAKI_BASE = Object.fromEntries(Object.entries(KOGAKI_MAP).map(([k, v]) => [v, k]));
     const SCAN_BACK   = { label: '戻る', speak: '戻る' };
+    const SCAN_KANA_DELAY = 1000; // 行が決まってから段が光り始めるまでの待機（最初の候補を落ち着いて選べるように）
 
     const scan = {
       phase: 'idle',   // idle / row / rowConfirm / kana / kanaConfirm
@@ -972,6 +971,7 @@
       rowIndex: 0,     // 選んだ行
       items: [],       // 段の候補
       ready: false,    // 確認の音声が終わり、決定を受け付けているか
+      starting: false, // 段スキャンが光り始める前の待機中か
       timer: null,
       gen: 0,          // 古い音声コールバックを無効にするための世代番号
       lastPress: 0
@@ -990,7 +990,7 @@
       select.replaceChildren(...values.map((v) => new Option(format(v), String(v))));
     }
     const formatSec = (v) => v.toFixed(1) + '秒';
-    fillOptions(SCAN_SETTING_SELECTS[0][0], [0.5, 1, 1.5, 2, 2.5, 3], formatSec);
+    fillOptions(SCAN_SETTING_SELECTS[0][0], [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5], formatSec);
     fillOptions(SCAN_SETTING_SELECTS[1][0], [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5], formatSec);
     fillOptions(SCAN_SETTING_SELECTS[2][0], [0.3, 0.5, 0.7, 1], formatSec);
     fillOptions(SCAN_SETTING_SELECTS[3][0], [2, 3, 4, 5, 0], (v) => (v ? v + '周' : 'しない'));
@@ -1059,13 +1059,22 @@
       updateUI();
     }
 
-    function scanRun(phase, index) {
+    function scanRun(phase, index, delay = 0) {
       scanStop();
       scan.phase = phase;
       scan.index = index;
       scan.cycles = 0;
       scan.ready = false;
-      scanStep();
+      scan.starting = delay > 0;
+      if (!delay) {
+        scanStep();
+        return;
+      }
+      updateUI();
+      scan.timer = setTimeout(() => {
+        scan.starting = false;
+        scanStep();
+      }, delay);
     }
 
     function scanStep() {
@@ -1123,12 +1132,13 @@
     function scanOpenRow(index) {
       scan.rowIndex = index;
       scan.items = [...scanItemsFor(SCAN_ROWS[index].key), SCAN_BACK];
-      scanRun('kana', 0);
+      scanRun('kana', 0, SCAN_KANA_DELAY);
     }
 
     function scanPress() {
       const confirming = scan.phase.endsWith('Confirm');
       if (confirming && !scan.ready) return; // 確認の音声中は受け付けない
+      if (scan.phase === 'kana' && scan.starting) return; // 段が光り始める前は受け付けない
       if (!acceptPress()) return;
       scanConfirmButton.classList.add('pressed');
       setTimeout(() => scanConfirmButton.classList.remove('pressed'), 150);
@@ -1164,7 +1174,8 @@
       const inRow      = scan.phase === 'row'  || scan.phase === 'rowConfirm';
       const inKana     = scan.phase === 'kana' || scan.phase === 'kanaConfirm';
       const confirming = scan.phase.endsWith('Confirm');
-      const marks = !confirming ? 'on' : scan.ready ? 'picked counting' : 'picked';
+      const starting   = scan.phase === 'kana' && scan.starting;
+      const marks = starting ? '' : !confirming ? 'on' : scan.ready ? 'picked counting' : 'picked';
       const dur   = confirming ? state.settings.confirmWait : state.settings.scanInterval;
 
       scanRowCard.classList.toggle('mode-active', inRow);
@@ -1191,6 +1202,8 @@
         statusText.textContent = scan.paused ? '一時停止中: 確定ボタンで再開' : '確定ボタンを押すと始まります';
       } else if (scan.phase === 'row') {
         statusText.textContent = `行選択: 「${row.speak}」`;
+      } else if (starting) {
+        statusText.textContent = `段選択（${row.speak}）: まもなく始まります`;
       } else if (scan.phase === 'kana') {
         statusText.textContent = `段選択（${row.speak}）: 「${item.label}」`;
       } else {
@@ -1198,7 +1211,7 @@
         statusText.textContent = `「${name}」ですね？` + (scan.ready ? ' 確定で決定' : '');
       }
       scanConfirmButton.textContent = scan.phase !== 'idle' ? '確定' : scan.paused ? '確定で再開' : '確定で開始';
-      scanConfirmButton.classList.toggle('waiting', confirming && !scan.ready);
+      scanConfirmButton.classList.toggle('waiting', (confirming && !scan.ready) || starting);
     }
 
     rowCells.forEach((cell) => cell.addEventListener('click', () => setRowSelection(cell.dataset.row)));
