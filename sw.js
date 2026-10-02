@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jpn-input-v10';
+const CACHE_NAME = 'jpn-input-v11';
 const STATIC_ASSETS = ['./manifest.json', './icon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -19,9 +19,11 @@ self.addEventListener('fetch', (event) => {
   const accept = event.request.headers.get('accept') || '';
 
   // index.html は常にネットワーク優先（オフライン時のみキャッシュ使用）
+  // GitHub Pages は max-age=600 で配信するため、no-cache で毎回サーバーに更新を確認する
+  // （指定しないと公開後10分ほど古い版がブラウザのHTTPキャッシュから返る）
   if (accept.includes('text/html')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then((res) => {
           caches.open(CACHE_NAME).then((c) => c.put(event.request, res.clone()));
           return res;
