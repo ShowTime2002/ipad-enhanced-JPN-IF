@@ -360,9 +360,28 @@
       to   { transform: scaleX(0); }
     }
 
-    .scan-confirm {
+    /* 確定ボタンの左右に「2つ前に戻す」リバースボタン（横幅10%ずつ） */
+    .scan-confirm-row {
       flex: 3 1 0;
       min-height: 80px;
+      display: grid;
+      grid-template-columns: 10% 1fr 10%;
+      gap: clamp(3px, 0.85svh, 6px);
+    }
+    .scan-reverse {
+      border: none;
+      border-radius: var(--card-radius);
+      background: #64748b;
+      color: #fff;
+      font-size: clamp(1.2rem, 3.5svh, 2.4rem);
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, filter 0.1s;
+    }
+    .scan-reverse.waiting { opacity: 0.4; }
+    .scan-reverse.pressed { filter: brightness(0.8); }
+
+    .scan-confirm {
       border: none;
       border-radius: var(--card-radius);
       background: var(--primary);
@@ -520,7 +539,11 @@
         <p class="section-title">段選択</p>
         <div class="scan-kana-grid" id="scanKanaGrid"></div>
       </div>
-      <button id="scanConfirmButton" class="scan-confirm">確定で開始</button>
+      <div class="scan-confirm-row">
+        <button class="scan-reverse" aria-label="2つ前に戻す">◀◀</button>
+        <button id="scanConfirmButton" class="scan-confirm">確定で開始</button>
+        <button class="scan-reverse" aria-label="2つ前に戻す">◀◀</button>
+      </div>
     </div>
 
   </div>
@@ -695,6 +718,7 @@
     const scanRowGrid          = document.getElementById('scanRowGrid');
     const scanKanaGrid         = document.getElementById('scanKanaGrid');
     const scanConfirmButton    = document.getElementById('scanConfirmButton');
+    const scanReverseButtons   = Array.from(document.querySelectorAll('.scan-reverse'));
     const SCAN_SETTING_SELECTS = [
       [document.getElementById('scanIntervalSelect'), 'scanInterval'],
       [document.getElementById('confirmWaitSelect'),  'confirmWait'],
@@ -961,6 +985,7 @@
     const SPEAK_NAME  = { 'ー': 'のばし棒', '、': '読点', '。': '句点', '？': 'はてな', 'ゔ': 'ヴ' };
     const KOGAKI_BASE = Object.fromEntries(Object.entries(KOGAKI_MAP).map(([k, v]) => [v, k]));
     const SCAN_BACK   = { label: '戻る', speak: '戻る' };
+    const SCAN_DOUBLE_TAP = 500;  // リバースボタンのダブルタップとみなす間隔
     const SCAN_KANA_DELAY = 1000; // 行が決まってから段が光り始めるまでの待機（最初の候補を落ち着いて選べるように）
 
     const scan = {
@@ -974,7 +999,8 @@
       starting: false, // 段スキャンが光り始める前の待機中か
       timer: null,
       gen: 0,          // 古い音声コールバックを無効にするための世代番号
-      lastPress: 0
+      lastPress: 0,
+      lastReverse: 0   // リバースボタンのダブルタップ判定用
     };
 
     const scanRowCells = SCAN_ROWS.map((row) => {
@@ -1162,6 +1188,22 @@
       }
     }
 
+    // リバースボタン: 1回で光る候補を2つ前に戻し、続けてもう1回（ダブルタップ）で先頭に戻す。
+    // 確認中なら選んだ候補を取り消して同じように戻す
+    function scanReverse(button) {
+      if (scan.phase === 'idle') return;
+      const now = Date.now();
+      const isDouble = now - scan.lastReverse < SCAN_DOUBLE_TAP;
+      if (!isDouble && !acceptPress()) return; // ダブルタップの2回目は連打防止の対象外
+      scan.lastReverse = isDouble ? 0 : now;   // 3回目は新しい1回目として扱う
+      button.classList.add('pressed');
+      setTimeout(() => button.classList.remove('pressed'), 150);
+
+      const inRow = scan.phase === 'row' || scan.phase === 'rowConfirm';
+      const length = inRow ? SCAN_ROWS.length : scan.items.length;
+      scanRun(inRow ? 'row' : 'kana', isDouble ? 0 : (scan.index - 2 + length) % length);
+    }
+
     function markCell(cell, marks, dur) {
       cell.classList.remove('on', 'picked', 'counting');
       if (!marks) return;
@@ -1212,6 +1254,7 @@
       }
       scanConfirmButton.textContent = scan.phase !== 'idle' ? '確定' : scan.paused ? '確定で再開' : '確定で開始';
       scanConfirmButton.classList.toggle('waiting', (confirming && !scan.ready) || starting);
+      scanReverseButtons.forEach((b) => b.classList.toggle('waiting', scan.phase === 'idle'));
     }
 
     rowCells.forEach((cell) => cell.addEventListener('click', () => setRowSelection(cell.dataset.row)));
@@ -1241,6 +1284,7 @@
 
     /* スキャンの確定は指が触れた瞬間に反応させる（click は指が動くと発火しないことがある） */
     scanConfirmButton.addEventListener('pointerdown', (e) => { e.preventDefault(); scanPress(); });
+    scanReverseButtons.forEach((b) => b.addEventListener('pointerdown', (e) => { e.preventDefault(); scanReverse(b); }));
 
     /* 介助者向け: スキャン中もパネルを直接タッチして選べる（設定で無効にできる）。
        行はすぐに段スキャンへ進む。段は誤タッチでも被害が出ないよう、音声確認を経て確定ボタンで決める */
@@ -1266,7 +1310,27 @@
     });
 
     /* アプリが裏に回ったらスキャンを止める */
-    document.addEventListener('visibilitychange', () => { if (document.hidden) scanIdle(false); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) scanIdle(false);
+      else requestWakeLock();
+    });
+
+    /* アプリを開いている間は画面が暗くならないようにする（Screen Wake Lock）。
+       端末の設定は変えず、アプリを閉じる・裏に回すとブラウザが自動で解除するので、元の省エネ動作に戻る */
+    let wakeLock = null;
+    async function requestWakeLock() {
+      if (!('wakeLock' in navigator) || wakeLock || document.hidden) return;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      } catch (e) {
+        // 低電力モードなどで拒否された場合は端末の設定どおりに動かす
+      }
+    }
+    requestWakeLock();
+    // ブラウザによってはユーザー操作の中でないと許可されないため、タッチのたびに（未取得なら）取り直す
+    document.addEventListener('touchend', requestWakeLock);
+    document.addEventListener('click', requestWakeLock);
 
     /* iOS は最初の音声をユーザー操作の中で鳴らす必要があるため、最初のタッチで音声を有効にしておく */
     function unlockSpeech() {

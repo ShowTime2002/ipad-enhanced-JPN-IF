@@ -37,6 +37,7 @@
 - ズーム・パン・ダブルタップは JS（touchmove / gesture* / touchend）で抑止している。操作要素を追加するときに壊さないこと
 - 音声合成（speechSynthesis）は、最初の1回をユーザー操作のイベント内で呼ぶ必要がある。touch の pointerdown はユーザー操作として扱われないため、最初の touchend / click で `unlockSpeech()` を呼んで有効にしている
 - 画面の高さ（`100svh`、`innerHeight`）は実機ごとの差が大きい。レイアウトを変えたら実機で確認する
+- 画面の消灯防止は Screen Wake Lock（`requestWakeLock()`）。ページが隠れるとブラウザが自動で解除するため、表示に戻ったときとタッチ時に取り直す。端末の設定は変更しない。Claude の Browser pane では権限がなく取得できないので、実機で確認する
 
 ## 公開・デプロイ
 
